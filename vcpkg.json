@@ -1,12 +1,25 @@
 {
-  "builtin-baseline": "7213cf8135c329c37c7e2778e40774489a0583a8",
-  "dependencies": [
-    "libpng",
-    "sdl3",
-    {
-        "name": "sdl3-image",
-        "features": [ "png", "jpeg" ]
-    },
-    "libjpeg-turbo"
-  ]
+    "builtin-baseline": "9e593bb18ea69cc5095e012465dcd675a822ed0d",
+    "dependencies": [
+        "libjpeg-turbo",
+        "libpng",
+        "sdl3",
+        {
+            "name": "sdl3-image",
+            "features": [ "png", "jpeg" ]
+        }
+    ],
+    "overrides": [
+        {
+            "name": "sdl3",
+            "version": "3.4.12"
+        },
+        {
+            "name": "sdl3-image",
+            "version": "3.4.4"
+        }
+    ]
 }
+
+    
+    
