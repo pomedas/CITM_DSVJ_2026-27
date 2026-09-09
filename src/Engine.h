@@ -2,7 +2,10 @@
 
 #include <memory>
 #include <list>
+#include <string>
 #include "Module.h"
+#include "Timer.h"
+#include "PerfTimer.h"
 
 
 // Modules
@@ -83,9 +86,28 @@ public:
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
 
-private: 
-	// Delta time in milliseconds.
-	// Always initialise: DoUpdate() passes this to every module from the very
-	// first frame, and it is not computed until L02/L03.
+private:
+	// Delta time in milliseconds, computed once per frame in FinishUpdate().
 	float dt = 0.0f;
+
+	// Frames since startup.
+	int frameCount = 0;
+
+	// Low-resolution timer for the whole game life; PerfTimer wherever
+	// sub-millisecond precision matters.
+	Timer startupTime;
+	PerfTimer frameTime;
+	PerfTimer lastSecFrameTime;
+	PerfTimer titleUpdateTime;
+
+	int framesPerSecond = 0;
+	int lastSecFrameCount = 0;
+
+	float averageFps = 0.0f;
+	int secondsSinceStartup = 0;
+
+	// Maximum frame duration in milliseconds.
+	int maxFrameDuration = 16;
+
+	std::string gameTitle = "Platformer Game";
 };

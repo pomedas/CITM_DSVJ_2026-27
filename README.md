@@ -1,96 +1,71 @@
-# L01 — Simple Engine
+# L02 — Framerate
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The same program as `L01_Simple_SDL`, reorganised into a small module-based
-engine. Nothing new happens on screen — the point is the structure, which every
-later lecture builds on.
+Builds on `L01_Simple_Engine`. The engine still does nothing new on screen — this
+lecture is about measuring what it is already doing: how long each part of
+startup takes, how long a frame takes, and how many frames per second the game
+is actually running at.
 
 ## The idea
 
-A game engine is the code that is *not* your game: it owns the window, the
-input, the renderer, the audio, and the order in which things happen each frame.
-Your game becomes one more module inside it.
+You cannot make something faster if you cannot measure it first. Two small timer
+classes are introduced:
 
-Here that means two classes:
+- **`Timer`** — millisecond precision, backed by `SDL_GetTicks()`. Cheap, coarse,
+  good for anything measured in whole seconds (how long since the game started).
+- **`PerfTimer`** — sub-millisecond precision, backed by
+  `SDL_GetPerformanceCounter()` / `SDL_GetPerformanceFrequency()`. More expensive,
+  good for anything measured in milliseconds (how long one frame took).
 
-- **`Engine`** — owns every module and drives the lifecycle.
-- **`Module`** — the interface each subsystem implements.
+`Engine` uses both to log how long `Awake()`, `Start()` and `CleanUp()` take, and
+to compute per-frame timing that is shown in the window title: last-second FPS,
+last frame's `dt`, time since startup, frame count, and the game's true lifetime
+average FPS.
 
-```
-Engine
-├── Window      creates the SDL window
-├── Input       reads keyboard and mouse
-├── Textures    loads and stores images
-├── Audio       music and sound effects
-├── Scene       your game — the only module you normally edit
-└── Render      draws everything (added last so it runs last)
-```
+The title is rebuilt and pushed to the OS at most ~4 times per second. The
+underlying measurements are still taken every frame — only the string building
+and the `SetTitle()` call are throttled, since both cost more than the frame
+budget they are supposed to be measuring.
 
-## The lifecycle
+## TODOs
 
-Every module gets the same six calls, and `Engine` decides when:
-
-| Call | When | Use it for |
+| Marker | File | What to fill in |
 |---|---|---|
-| `Awake()` | once, before the renderer exists | reading configuration |
-| `Start()` | once, before the first frame | loading assets |
-| `PreUpdate()` | every frame, first | preparing frame state |
-| `Update(dt)` | every frame | game logic |
-| `PostUpdate()` | every frame, last | drawing, cleanup of the frame |
-| `CleanUp()` | once, at shutdown | releasing resources |
+| `L02: TODO 1` | `src/Timer.cpp` | `Start()`, `ReadSec()`, `ReadMSec()` — one line each |
+| `L02: TODO 2` | `src/PerfTimer.cpp` | Constructor, `Start()`, `ReadMs()`, `ReadTicks()` — one line each |
+| `L02: TODO 3` | `src/Engine.cpp` | Wrap the body of the constructor, `Awake()`, `Start()` and `CleanUp()` in a `Timer` and `LOG()` the result |
+| `L02: TODO 4` | `src/Engine.cpp` `FinishUpdate()` | Frame count, elapsed time, `dt`, last-second frame count, and the true lifetime average FPS |
 
-Modules are added in initialisation order and cleaned up in reverse. `Render` is
-added last so that everything else has already decided what to draw by the time
-it runs.
+`PerfTimer::frequency` is `static` — the performance-counter frequency is a
+property of the machine, not of any one timer instance, so every `PerfTimer`
+shares the same value instead of re-querying it.
 
-## Patterns introduced here
-
-**Singleton.** `Engine::GetInstance()` returns the one and only engine, so any
-module can reach any other with `Engine::GetInstance().render->...`.
-
-This is convenient and it is what we will use all course, but it is not free,
-and you should be able to say why:
-
-- nothing can be tested in isolation, because every call reaches the global
-- a function's dependencies are invisible from its signature
-- initialisation order becomes something you have to keep in your head
-
-We accept those costs here in exchange for getting to a working game inside a
-semester. In a production engine you would pass dependencies explicitly. Know
-the trade-off you are making.
-
-**Smart pointers.** The engine holds its modules in `std::shared_ptr` so they
-are released automatically. `unique_ptr` (sole ownership), `shared_ptr` (shared
-ownership, reference counted) and `weak_ptr` (non-owning) are the three you will
-meet — reach for the weakest one that expresses what you actually mean.
+Average FPS is a **true lifetime average**: total frames divided by total
+elapsed time, not a running blend of the last two readings. Compute it from
+`Timer::ReadMSec()` (milliseconds), not from a truncated integer seconds count —
+otherwise the average reads 0 for the entire first second of the game's life.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. The first build pulls
-SDL3 and SDL3-image through vcpkg and takes a few minutes.
+Open `PlatformGame.sln`, select **x64**, build and run. Watch the window title —
+it should settle into a stable number once `TODO 4` is filled in.
 
 ## Read the code
 
-Start at `src/PlatformGame.cpp` and follow the `EngineState` machine:
-
-```
-CREATE → AWAKE → START → LOOP → CLEAN → EXIT
-```
-
-Then open `src/Engine.cpp` and see how `Update()` calls `PreUpdate`, `DoUpdate`
-and `PostUpdate` in turn across every module. Then look at `src/Scene.cpp` —
-that is where your game will live.
+Start at `src/Engine.cpp`. `PrepareUpdate()` starts the per-frame timer;
+`FinishUpdate()` reads it and everything else, once per frame, and pushes the
+throttled title update.
 
 ## Homework
 
-- Review the diff between this branch and `L01_Simple_SDL` and make sure you can
-  explain what moved where.
-- Find where a texture is drawn. Add a second one at a different position.
-- Where would you add a new module, and in what order? Why does `Render` go last?
+- Fill in all four TODOs and confirm the title updates with sensible numbers.
+- Explain out loud why `Timer` uses `SDL_GetTicks()` and `PerfTimer` uses
+  `SDL_GetPerformanceCounter()` instead of both using the same call.
+- The average FPS is computed over the game's entire life. What would you need
+  to change to show a rolling average over just the last 5 seconds instead?
 
 ## Reference
 
-- Game Loop pattern — <https://gameprogrammingpatterns.com/game-loop.html>
-- Singleton pattern — <https://en.wikipedia.org/wiki/Singleton_pattern>
-- vcpkg package search — <https://vcpkg.link/>
+- SDL3 timer functions — <https://wiki.libsdl.org/SDL3/CategoryTimer>
+- `SDL_GetPerformanceCounter` — <https://wiki.libsdl.org/SDL3/SDL_GetPerformanceCounter>

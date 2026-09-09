@@ -1,5 +1,7 @@
 #include "Engine.h"
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include "Log.h"
 
 #include "Window.h"
@@ -14,6 +16,9 @@
 Engine::Engine() {
 
 	LOG("Constructor Engine::Engine");
+
+    // L02: TODO 3: Measure the amount of ms that takes to execute the Engine constructor and LOG the result
+    // ...
 
     // Modules
     window = std::make_shared<Window>();
@@ -31,9 +36,10 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(audio));
     AddModule(std::static_pointer_cast<Module>(scene));
 
-    // Render last 
+    // Render last
     AddModule(std::static_pointer_cast<Module>(render));
 
+    // L02: TODO 3: Log the result of the timer
 }
 
 // Static method to get the instance of the Engine class, following the singleton pattern
@@ -50,6 +56,9 @@ void Engine::AddModule(std::shared_ptr<Module> module){
 // Called before render is available
 bool Engine::Awake() {
 
+    // L02: TODO 3: Measure the amount of ms that takes to execute the Awake() and LOG the result
+    // ...
+
     LOG("Engine::Awake");
 
     //Iterates the module list and calls Awake on each module
@@ -61,11 +70,17 @@ bool Engine::Awake() {
 		}
     }
 
+    // L02: TODO 3: Log the result of the timer
+
     return result;
 }
 
 // Called before the first frame
 bool Engine::Start() {
+
+    // L02: TODO 3: Measure the amount of ms that takes to execute the Start() and LOG the result
+    // ...
+
     LOG("Engine::Start");
 
     //Iterates the module list and calls Start on each module
@@ -76,6 +91,8 @@ bool Engine::Start() {
             break;
         }
     }
+
+    // L02: TODO 3: Log the result of the timer
 
     return result;
 }
@@ -104,6 +121,10 @@ bool Engine::Update() {
 
 // Called before quitting
 bool Engine::CleanUp() {
+
+    // L02: TODO 3: Measure the amount of ms that takes to execute the CleanUp() and LOG the result
+    // ...
+
     LOG("Engine::CleanUp");
 
     //Iterates the module list IN REVERSE and calls CleanUp on each module.
@@ -118,18 +139,45 @@ bool Engine::CleanUp() {
         }
     }
 
+    // L02: TODO 3: Log the result of the timer
+
     return result;
 }
 
 // ---------------------------------------------
 void Engine::PrepareUpdate()
 {
+    frameTime.Start();
 }
 
 // ---------------------------------------------
 void Engine::FinishUpdate()
 {
+    // L02: TODO 4: Calculate:
+    // Amount of frames since startup
+    // Amount of time since game start (use a low resolution timer)
+    // Amount of ms took the last update (dt)
+    // Amount of frames during the last second
+    // True lifetime average FPS: divide total frames by total elapsed time,
+    // guarded against divide-by-zero on the very first frame, using the
+    // millisecond-resolution Timer rather than the truncated integer
+    // secondsSinceStartup
+    // ...
 
+    // Window title is expensive to rebuild and SetTitle() is a syscall, so it
+    // is throttled to ~4 Hz; the measurements above are still per-frame.
+    if (titleUpdateTime.ReadMs() > 250.0) {
+        titleUpdateTime.Start();
+
+        std::stringstream ss;
+        ss << gameTitle << ": Av.FPS: " << std::fixed << std::setprecision(2) << averageFps
+            << " Last sec frames: " << framesPerSecond
+            << " Last dt: " << std::fixed << std::setprecision(3) << dt
+            << " Time since startup: " << secondsSinceStartup
+            << " Frame Count: " << frameCount;
+
+        window->SetTitle(ss.str().c_str());
+    }
 }
 
 // Call modules before each loop iteration
