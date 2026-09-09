@@ -18,7 +18,7 @@ Engine::Engine() {
 	LOG("Constructor Engine::Engine");
 
     // L02: TODO 3: Measure the amount of ms that takes to execute the Engine constructor and LOG the result
-    // ...
+    Timer timer = Timer();
 
     // Modules
     window = std::make_shared<Window>();
@@ -40,6 +40,7 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(render));
 
     // L02: TODO 3: Log the result of the timer
+    LOG("Timer App Constructor(): %f", timer.ReadMSec());
 }
 
 // Static method to get the instance of the Engine class, following the singleton pattern
@@ -57,7 +58,7 @@ void Engine::AddModule(std::shared_ptr<Module> module){
 bool Engine::Awake() {
 
     // L02: TODO 3: Measure the amount of ms that takes to execute the Awake() and LOG the result
-    // ...
+    Timer timer = Timer();
 
     LOG("Engine::Awake");
 
@@ -71,6 +72,7 @@ bool Engine::Awake() {
     }
 
     // L02: TODO 3: Log the result of the timer
+    LOG("Timer App Awake(): %f", timer.ReadMSec());
 
     return result;
 }
@@ -79,7 +81,7 @@ bool Engine::Awake() {
 bool Engine::Start() {
 
     // L02: TODO 3: Measure the amount of ms that takes to execute the Start() and LOG the result
-    // ...
+    Timer timer = Timer();
 
     LOG("Engine::Start");
 
@@ -93,6 +95,7 @@ bool Engine::Start() {
     }
 
     // L02: TODO 3: Log the result of the timer
+    LOG("Timer App Start(): %f", timer.ReadMSec());
 
     return result;
 }
@@ -123,7 +126,7 @@ bool Engine::Update() {
 bool Engine::CleanUp() {
 
     // L02: TODO 3: Measure the amount of ms that takes to execute the CleanUp() and LOG the result
-    // ...
+    Timer timer = Timer();
 
     LOG("Engine::CleanUp");
 
@@ -140,6 +143,7 @@ bool Engine::CleanUp() {
     }
 
     // L02: TODO 3: Log the result of the timer
+    LOG("Timer App CleanUp(): %f", timer.ReadMSec());
 
     return result;
 }
@@ -162,7 +166,19 @@ void Engine::FinishUpdate()
     // guarded against divide-by-zero on the very first frame, using the
     // millisecond-resolution Timer rather than the truncated integer
     // secondsSinceStartup
-    // ...
+    frameCount++;
+    secondsSinceStartup = startupTime.ReadSec();
+    dt = (float)frameTime.ReadMs();
+
+    lastSecFrameCount++;
+    if (lastSecFrameTime.ReadMs() > 1000.0) {
+        lastSecFrameTime.Start();
+        framesPerSecond = lastSecFrameCount;
+        lastSecFrameCount = 0;
+    }
+
+    float elapsedMs = startupTime.ReadMSec();
+    averageFps = (elapsedMs > 0.0f) ? (frameCount / (elapsedMs / 1000.0f)) : 0.0f;
 
     // Window title is expensive to rebuild and SetTitle() is a syscall, so it
     // is throttled to ~4 Hz; the measurements above are still per-frame.
