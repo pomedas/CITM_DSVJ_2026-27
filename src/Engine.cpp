@@ -11,6 +11,7 @@
 #include "Audio.h"
 #include "Scene.h"
 #include "Map.h"
+#include "Physics.h"
 #include "EntityManager.h"
 
 
@@ -28,6 +29,7 @@ Engine::Engine() {
     render = std::make_shared<Render>();
     textures = std::make_shared<Textures>();
     audio = std::make_shared<Audio>();
+    physics = std::make_shared<Physics>();
     map = std::make_shared<Map>();
     scene = std::make_shared<Scene>();
 
@@ -39,10 +41,16 @@ Engine::Engine() {
     // L07: registration order is also Update()/PostUpdate() (draw) order for
     // every module, so map is registered -- and therefore drawn -- before
     // scene and before entityManager.
+    // L08: physics must also be registered before map and scene: Scene::Start()
+    // calls Map::Load(), which creates the map's static colliders, and
+    // EntityManager::Start() initialises Player/Item, whose Start() creates
+    // their own bodies -- all of that needs physics->world to already exist.
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(textures));
     AddModule(std::static_pointer_cast<Module>(audio));
+    AddModule(std::static_pointer_cast<Module>(physics));
+
     AddModule(std::static_pointer_cast<Module>(map));
     AddModule(std::static_pointer_cast<Module>(scene));
 
