@@ -27,6 +27,11 @@ bool Scene::Awake()
 	// L04: TODO 5: Create the player through the entity manager
 	player = std::dynamic_pointer_cast<Player>(Engine::GetInstance().entityManager->CreateEntity(EntityType::PLAYER));
 
+	// L10: TODO 2: Hand the player its <player> config.xml section -- works
+	// because the L04 pending queue defers Awake()/Start() until later, so
+	// there's a window between construction and Awake() to set this first
+	// ...
+
 	// L08: TODO 5: Create an item through the entity manager, to test picking it up
 	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
 	item->position = Vector2D(200, 672);
@@ -71,10 +76,22 @@ bool Scene::Update(float dt)
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT)
 		cameraX += camSpeed * dt;
 
-	Engine::GetInstance().render->camera.x = (int)cameraX;
-	Engine::GetInstance().render->camera.y = (int)cameraY;
+	SetCameraX(cameraX);
+	SetCameraY(cameraY);
 
 	return true;
+}
+
+void Scene::SetCameraX(float x)
+{
+	cameraX = x;
+	Engine::GetInstance().render->camera.x = (int)cameraX;
+}
+
+void Scene::SetCameraY(float y)
+{
+	cameraY = y;
+	Engine::GetInstance().render->camera.y = (int)cameraY;
 }
 
 // Called each loop iteration

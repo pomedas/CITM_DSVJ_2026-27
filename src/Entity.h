@@ -48,6 +48,10 @@ public:
 		return true;
 	}
 
+	// L10: TODO 1: Store this entity's slice of config.xml, mirroring
+	// Module::LoadParameters
+	// ...
+
 	virtual bool Destroy()
 	{
 		return true;
@@ -93,4 +97,7 @@ public:
 	// want our Entity class, maybe it's not renderable...
 	Vector2D position;
 	bool renderable = true;
+
+	// L10: TODO 1: This entity's slice of config.xml, set via SetParameters()
+	// ...
 };
