@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "pugixml.hpp"
 
 class Module
 {
@@ -50,9 +51,17 @@ public:
 		return true;
 	}
 
+	// L05: TODO 4: Store this module's slice of config.xml, read in Engine::Awake()
+	virtual bool LoadParameters(pugi::xml_node parameters)
+	{
+		configParameters = parameters;
+		return true;
+	}
+
 public:
 
 	std::string name;
 	bool active;
+	pugi::xml_node configParameters;
 
 };

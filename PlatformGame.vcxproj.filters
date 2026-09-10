@@ -30,6 +30,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="config.xml">
+      <Filter>Configuration FIles</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="src\Audio.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>

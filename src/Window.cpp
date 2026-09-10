@@ -2,6 +2,22 @@
 #include "Log.h"
 #include "Engine.h"
 
+// Reads an int attribute, logging a warning and falling back to `def` if it's missing.
+static int ConfigInt(const pugi::xml_node& node, const char* attr, int def)
+{
+	pugi::xml_attribute a = node.attribute(attr);
+	if (a.empty()) LOG("config.xml: missing '%s' on <%s>, using default %d", attr, node.name(), def);
+	return a.as_int(def);
+}
+
+// Reads a bool attribute, logging a warning and falling back to `def` if it's missing.
+static bool ConfigBool(const pugi::xml_node& node, const char* attr, bool def)
+{
+	pugi::xml_attribute a = node.attribute(attr);
+	if (a.empty()) LOG("config.xml: missing '%s' on <%s>, using default %s", attr, node.name(), def ? "true" : "false");
+	return a.as_bool(def);
+}
+
 Window::Window() : Module()
 {
 	window = NULL;
@@ -27,16 +43,18 @@ bool Window::Awake()
 	else
 	{
 		// Create window
+		// L05: TODO 6: Load fullscreen/borderless/resizable/fullscreen_window
+		// and the window resolution from config.xml
 		Uint32 flags = 0;
-		bool fullscreen = false;
-		bool borderless = false;
-		bool resizable = false;
-		bool fullscreen_window = false;
+		bool fullscreen = ConfigBool(configParameters.child("fullscreen"), "value", false);
+		bool borderless = ConfigBool(configParameters.child("borderless"), "value", false);
+		bool resizable = ConfigBool(configParameters.child("resizable"), "value", false);
+		bool fullscreen_window = ConfigBool(configParameters.child("fullscreen_window"), "value", false);
 
-		// TODO Get the values from the config file
-		width = 1280;
-		height = 720;
-		scale = 1;
+		pugi::xml_node resolution = configParameters.child("resolution");
+		width = ConfigInt(resolution, "width", 1280);
+		height = ConfigInt(resolution, "height", 720);
+		scale = ConfigInt(resolution, "scale", 1);
 
 		if (fullscreen == true)        flags |= SDL_WINDOW_FULLSCREEN;
 		if (borderless == true)        flags |= SDL_WINDOW_BORDERLESS;

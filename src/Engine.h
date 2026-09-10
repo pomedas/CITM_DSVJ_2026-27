@@ -6,6 +6,7 @@
 #include "Module.h"
 #include "Timer.h"
 #include "PerfTimer.h"
+#include "pugixml.hpp"
 
 
 // Modules
@@ -64,6 +65,9 @@ private:
 	// Call modules after each loop iteration
 	bool PostUpdate();
 
+	// Load config file
+	bool LoadConfig();
+
 	std::list<std::shared_ptr<Module>> moduleList;
 
 public:
@@ -117,4 +121,7 @@ private:
 	double delayRemainder = 0.0;
 
 	std::string gameTitle = "Platformer Game";
+
+	// L05: TODO 2: Parsed contents of config.xml
+	pugi::xml_document configFile;
 };

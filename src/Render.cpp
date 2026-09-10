@@ -30,6 +30,11 @@ bool Render::Awake()
 	int scale = Engine::GetInstance().window->GetScale();
 	SDL_Window* window = Engine::GetInstance().window->window;
 
+	// L05: TODO 5: Load the vsync setting from config.xml
+	pugi::xml_attribute vsyncAttr = configParameters.child("vsync").attribute("value");
+	if (vsyncAttr.empty()) LOG("config.xml: missing render/vsync@value, using default false");
+	vsync = vsyncAttr.as_bool();
+
 	// SDL3: no flags; create default renderer and set vsync separately
 	renderer = SDL_CreateRenderer(window, nullptr);
 

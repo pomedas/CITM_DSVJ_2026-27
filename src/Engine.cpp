@@ -69,9 +69,37 @@ bool Engine::Awake() {
 
     LOG("Engine::Awake");
 
+    // L05: TODO 2: Load config.xml before any module reads it
+    if (!LoadConfig()) {
+        return false;
+    }
+
+    // L05: TODO 3: Read the title and target frame rate from the config file
+    pugi::xml_node engineNode = configFile.child("config").child("engine");
+
+    pugi::xml_attribute titleAttr = engineNode.child("title").attribute("value");
+    if (titleAttr.empty()) {
+        LOG("config.xml: missing engine/title@value, using default '%s'", gameTitle.c_str());
+    }
+    else {
+        gameTitle = titleAttr.as_string();
+    }
+
+    pugi::xml_attribute rateAttr = engineNode.child("targetFrameRate").attribute("value");
+    int targetFrameRate = rateAttr.as_int();
+    if (rateAttr.empty() || targetFrameRate <= 0) {
+        LOG("config.xml: missing or invalid engine/targetFrameRate@value, using default %d ms/frame", maxFrameDuration);
+    }
+    else {
+        maxFrameDuration = 1000 / targetFrameRate;
+    }
+
     //Iterates the module list and calls Awake on each module
     bool result = true;
     for (const auto& module : moduleList) {
+        // L05: TODO 4: Load this module's parameters before Awake()
+        module->LoadParameters(configFile.child("config").child(module->name.c_str()));
+
         result =  module->Awake();
         if (!result) {
 			break;
@@ -268,5 +296,28 @@ bool Engine::PostUpdate()
 
     return result;
 }
+
+// Load config from XML file
+bool Engine::LoadConfig()
+{
+    // L05: TODO 2: Load config.xml with load_file(), and fail loudly if it is
+    // missing, fails to parse, or has no <config> root -- a bad config should
+    // stop the game at startup, not run silently with zeroed-out settings
+    pugi::xml_parse_result result = configFile.load_file("config.xml");
+
+    if (!result) {
+        LOG("Error loading config.xml: %s", result.description());
+        return false;
+    }
+
+    if (!configFile.child("config")) {
+        LOG("Error loading config.xml: missing <config> root element");
+        return false;
+    }
+
+    LOG("config.xml parsed without errors");
+    return true;
+}
+
 
 
