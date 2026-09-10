@@ -5,8 +5,49 @@
 #include <SDL3/SDL_rect.h>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 struct SDL_Texture;
+
+// L09: TODO 1: Add name/value to Property, and the typed accessors below --
+// value is a string so a property can hold a bool, an int, a float or text.
+struct Properties
+{
+	struct Property
+	{
+		std::string name;
+		std::string value;
+
+		bool AsBool(bool defaultValue = false) const
+		{
+			return value.empty() ? defaultValue : (value == "true" || value == "1");
+		}
+
+		int AsInt(int defaultValue = 0) const
+		{
+			return value.empty() ? defaultValue : std::atoi(value.c_str());
+		}
+
+		float AsFloat(float defaultValue = 0.0f) const
+		{
+			return value.empty() ? defaultValue : (float)std::atof(value.c_str());
+		}
+
+		const std::string& AsString() const { return value; }
+	};
+
+	// L09: TODO 1: The properties belonging to a single map or layer node
+	std::vector<Property> list;
+
+	// L09: TODO 2: Return the property with this name, or nullptr if none
+	const Property* GetProperty(const std::string& name) const
+	{
+		for (const auto& property : list) {
+			if (property.name == name) return &property;
+		}
+		return nullptr;
+	}
+};
 
 // L07: TODO 1: Create a struct to hold information for a single map layer
 struct MapLayer
@@ -15,7 +56,11 @@ struct MapLayer
 	std::string name;
 	int width;
 	int height;
+	bool visible;   // native TMX attribute; hides helper layers like the collision mask
 	std::vector<int> tiles;
+
+	// L09: TODO 3: Custom properties read from this layer's <properties> node
+	Properties properties;
 
 	// L07: TODO 6: Return the gid at tile (i, j)
 	unsigned int Get(int i, int j) const
@@ -92,6 +137,12 @@ public:
 
 	// L07: TODO 8: Translate tile coordinates (i, j) into world (pixel) coordinates
 	Vector2D MapToWorld(int i, int j) const;
+
+	// L09: TODO 6: Return the tileset a gid belongs to, nullptr if none match
+	const TileSet* GetTilesetFromTileId(int gid) const;
+
+	// L09: TODO 4: Parse a <properties> node's <property> children into properties
+	bool LoadProperties(const pugi::xml_node& node, Properties& properties);
 
 public:
 	std::string mapFileName;
