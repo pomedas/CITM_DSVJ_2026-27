@@ -45,6 +45,8 @@ bool Item::Update(float dt)
 
 bool Item::Draw()
 {
+	// L08: TODO 4: Once pbody exists, position is the body's CENTER -- offset
+	// by half the sprite size when drawing
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX() - texW / 2, (int)position.getY() - texH / 2);
 	return true;
 }
