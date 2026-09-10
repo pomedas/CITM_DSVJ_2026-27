@@ -69,9 +69,14 @@ bool Audio::EnsureStreams() {
         }
         if (!SDL_BindAudioStream(device_, music_stream_)) {
             LOG("Audio: SDL_BindAudioStream (music) failed: %s", SDL_GetError());
+            SDL_DestroyAudioStream(music_stream_);
+            music_stream_ = nullptr;
             return false;
         }
     }
+
+    // Set music volume
+    SDL_SetAudioStreamGain(music_stream_, music_volume_);
 
     if (!sfx_stream_) {
         sfx_stream_ = SDL_CreateAudioStream(nullptr, &device_spec_);
@@ -81,9 +86,14 @@ bool Audio::EnsureStreams() {
         }
         if (!SDL_BindAudioStream(device_, sfx_stream_)) {
             LOG("Audio: SDL_BindAudioStream (sfx) failed: %s", SDL_GetError());
+            SDL_DestroyAudioStream(sfx_stream_);
+            sfx_stream_ = nullptr;
             return false;
         }
     }
+
+    // Set SFX volume
+    SDL_SetAudioStreamGain(sfx_stream_, sfx_volume_);
 
     return true;
 }
@@ -105,7 +115,15 @@ bool Audio::Awake() {
 }
 
 bool Audio::CleanUp() {
-    if (!active) return true;
+    // If audio is inactive or already quit elsewhere, don't touch SDL objects.
+    if (!active || !SDL_WasInit(SDL_INIT_AUDIO)) {
+        music_stream_ = nullptr;
+        sfx_stream_ = nullptr;
+        device_ = 0;
+        sfx_.clear();
+        FreeSound(music_data_);
+        return true;
+    }
 
     LOG("Audio: cleaning up");
 
@@ -203,4 +221,30 @@ bool Audio::PlayFx(int id, int repeat) {
     }
 
     return true;
+}
+
+void Audio::SetMusicVolume(float volume)
+{
+    // clamp
+    if (volume < 0.0f) volume = 0.0f;
+    else if (volume > 1.0f) volume = 1.0f;
+
+    music_volume_ = volume;
+
+    if (music_stream_) {
+        SDL_SetAudioStreamGain(music_stream_, music_volume_);
+    }
+}
+
+void Audio::SetSFXVolume(float volume)
+{
+    // clamp
+    if (volume < 0.0f) volume = 0.0f;
+    else if (volume > 1.0f) volume = 1.0f;
+
+    sfx_volume_ = volume;
+
+    if (sfx_stream_) {
+        SDL_SetAudioStreamGain(sfx_stream_, sfx_volume_);
+    }
 }
