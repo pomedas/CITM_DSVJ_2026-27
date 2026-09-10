@@ -1,82 +1,92 @@
-# L03 — Delta Time (Solution)
+# L04 — Entity System
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L03_DeltaTime`. Builds on `L02_Framerate_Solution`. All
-three TODOs are filled in — this is what your engine should look like at the end
-of the lecture.
+Builds on `L03_DeltaTime_Solution`. Up to now `Scene` has done everything
+itself — this lecture introduces `Entity`, a base class for anything that lives
+in the game world, and `EntityManager`, a new module that owns a list of
+entities and drives their lifecycle. `Player` is the first entity.
 
 ## The idea
 
-L02 measured `dt`. L03 uses it for two things every game loop needs:
+Three ideas make this system worth the extra layer:
 
-1. **A stable frame rate.** Without a cap, the loop runs as fast as the CPU/GPU
-   allow. `FinishUpdate()` now caps each frame to `maxFrameDuration` ms by
-   `SDL_Delay()`-ing away whatever time is left over once the frame's work is
-   done.
-2. **Framerate-independent movement.** Anything that moves — right now, the
-   camera — must scale its motion by `dt` (in seconds, since the L02 amendment),
-   not by a fixed per-frame constant. At 30 fps `dt` is twice as large as at
-   60 fps, so `distance = speed * dt` covers the same ground either way.
+1. **`Update()` and `Draw()` are separate.** An entity's `Update(dt)` is logic
+   only; its `Draw()` is rendering only. `EntityManager` calls every entity's
+   `Update()` from its own `Update(dt)`, then every entity's `Draw()` from its
+   own `PostUpdate()` — after *all* entities have finished their logic for the
+   frame. Later in the course, frustum culling needs to skip drawing an
+   off-screen entity without also skipping its logic; if the two were still
+   merged, skipping the off-screen branch would skip both.
+2. **New entities initialise themselves.** Anything created after the game has
+   started — right now, just the player, created in `Scene::Awake()` — is
+   queued in `EntityManager::pending` and only moved into the live `entities`
+   list once `InitialisePending()` runs. That happens automatically from
+   `EntityManager::Start()` and `EntityManager::Update()`; you never need a
+   hand-written `entity->Start()` call anywhere else.
+3. **`Awake()` then `Start()`, batched.** `InitialisePending()` (already
+   written for you in `EntityManager.cpp`) calls `Awake()` on every entity in a
+   batch before calling `Start()` on any of them. That means a `Start()` can
+   safely assume every entity created alongside it has already had its
+   `Awake()` — the same contract Unity uses.
 
-## What each TODO does
+## TODOs
 
-| Marker | File | Answer |
+| Marker | File | What to fill in |
 |---|---|---|
-| `L03: TODO 1` | `src/Engine.cpp` `FinishUpdate()` | `SDL_Delay()` for `maxFrameDuration - currentDt`, carrying the fractional millisecond the `Uint32` delay can't represent into `delayRemainder` for next frame |
-| `L03: TODO 2` | `src/Engine.cpp` `FinishUpdate()` | A `PerfTimer` around `SDL_Delay()`, `LOG()`-ed against the requested delay |
-| `L03: TODO 3` | `src/Scene.cpp` `Update()` | Camera moves by `camSpeed * dt` px/s, accumulated in the float `cameraX`/`cameraY` members, cast to `int` only when written into `render->camera` |
+| `L04: TODO 1` | `src/Engine.cpp`/`.h` | Instantiate `entityManager` and register it as a module, like `scene` or `audio` |
+| `L04: TODO 2` | `src/Player.cpp` `Awake()` | Set the player's initial `position` |
+| `L04: TODO 3` | `src/Player.cpp` `Start()` | Load `Assets/Textures/player1.png` into `texture` |
+| `L04: TODO 4` | `src/EntityManager.cpp` `CreateEntity()` | Instantiate the right subclass by `EntityType`, queue it in `pending`, and return it — an unknown type should return `nullptr` |
+| `L04: TODO 5` | `src/Scene.cpp` `Awake()` | Create the player through `entityManager->CreateEntity()` |
+| `L04: TODO 6` | `src/Player.cpp` `Update()` | Move the player with WASD, scaled by `dt` — logic only, no rendering |
+| `L04: TODO 7` | `src/Player.cpp` `Draw()` | Render `texture` at `position` — rendering only, no movement |
 
-### Why the frame cap doesn't run fast
+`Entity.h` and `EntityManager.h`/`.cpp` are otherwise complete — the pending
+queue, the two-pass `Awake`-then-`Start`, and the `Update`/`Draw` split are
+engine plumbing, not something you need to write. Your work is in `Player.cpp`,
+`EntityManager::CreateEntity()`, and the two-line `Engine` registration.
 
-A naive cap does `SDL_Delay((Uint32)(maxFrameDuration - currentDt))`. The cast to
-`Uint32` truncates — a fraction of a millisecond is thrown away every single
-frame, so the loop runs systematically faster than `maxFrameDuration` implies.
-This solution keeps that fraction in `delayRemainder` and folds it into next
-frame's delay calculation, so the average frame duration converges on
-`maxFrameDuration` instead of drifting short.
+### Where TODO 1 goes
 
-### Why the camera doesn't use `ceil()`
+`entityManager` needs to be created and registered exactly like the other
+modules just above it — `make_shared` it, then `AddModule` it — but it must go
+**before** `render` (which is always registered last). `Render::PostUpdate()`
+presents the frame, and modules run their `PostUpdate()` in registration order,
+so anything that should draw before the frame is presented has to be registered
+earlier than `render`.
 
-An earlier version of this fix used `camera.y -= ceil(camSpeed * dt)`. `camera`
-is an `SDL_Rect`, so `camera.x`/`camera.y` are `int` — rounding *up* every frame
-and truncating the assignment biases movement upward, and the faster the
-machine, the more frames per second, the more that upward bias adds up. Measured
-against the ideal 1000 px/s, the error was 0.1% at 7 fps but 20% at 240 fps —
-backwards from what a framerate-independence fix is supposed to guarantee.
+### Why `CreateEntity` should be able to return `nullptr`
 
-The actual bug isn't float precision, it's that an `int` camera can't hold a
-sub-pixel position at all. The fix is `Scene::cameraX`/`cameraY` (`float`,
-declared in `Scene.h`): they accumulate the exact position every frame, and only
-the final assignment into `render->camera.x`/`y` truncates to `int`. Nothing
-compounds, because the accumulator itself never loses precision. `Vector2D` at
-L04 uses the same idea for every entity.
+Don't fall back to constructing a plain `Entity` for an unrecognised
+`EntityType` — that produces a generic object with no texture and nothing to
+render, silently added to the entity list. Return `nullptr` instead, and let
+the caller (see `Scene::Awake()` in the reference solution) handle it.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. Hold an arrow key — the
-image's camera view should pan at a constant speed regardless of frame rate.
-Check the window title: `Last dt` should hover near `16.7 ms` (`maxFrameDuration`
-is 16 ms).
+Open `PlatformGame.sln`, select **x64**, build and run. Before the TODOs are
+filled in, the game looks exactly like `L03_DeltaTime_Solution` — background
+image, arrow-key camera pan — because nothing yet creates a player. Once TODOs
+1, 4 and 5 are done, a player sprite should appear; TODO 2 sets where it starts,
+TODO 6/7 make it move and actually draw.
 
 ## Read the code
 
-Start at `src/Engine.cpp` `FinishUpdate()` — the delay cap runs first, then the
-L02 frame/FPS bookkeeping (unchanged, now measuring a frame that includes the
-delay). Then `src/Scene.cpp` `Update()` for the camera.
+Start at `src/Entity.h` for the interface every entity implements, then
+`src/EntityManager.cpp` to see how entities are created, initialised, updated
+and drawn — everything there except `CreateEntity()`'s switch is already
+written. `src/Player.cpp` is the first (and so far only) concrete entity.
 
 ## Homework
 
-- Compare this branch against `L03_DeltaTime` — the diff should be nothing but
-  the three TODO bodies, no formatting or include churn.
-- Try `maxFrameDuration = 32` and `maxFrameDuration = 64`. The camera should
-  still pan at the same real-world speed; only how choppy it looks should
-  change. This is the same test Assignment 1 grades with `frcap`.
-- `secondsSinceStartup` truncates to whole seconds and `averageFps` doesn't yet
-  account for the delay eating into `dt` differently at different caps — trace
-  through what each one reports right after startup at `maxFrameDuration = 64`.
+- Fill in all seven TODOs and confirm the player moves independently of frame
+  rate, the same way the L03 camera does.
+- `EntityManager::Awake()` iterates `entities`, but at the point `Awake()` runs,
+  is that list ever non-empty? Why does the method still exist?
+- What would go wrong if `EntityManager::Start()` called `InitialisePending()`
+  *and then* looped over `entities` calling `Start()` again?
 
 ## Reference
 
-- `SDL_Delay` — <https://wiki.libsdl.org/SDL3/SDL_Delay>
-- Fix Your Timestep! (Gaffer On Games) — <https://gafferongames.com/post/fix_your_timestep/>
+- Unity's `Awake`/`Start` execution order — <https://docs.unity3d.com/Manual/ExecutionOrder.html>
