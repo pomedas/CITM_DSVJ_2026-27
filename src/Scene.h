@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Module.h"
+#include <memory>
 
 struct SDL_Texture;
+class Player;
 
 class Scene : public Module
 {
@@ -39,4 +41,6 @@ private:
 	// render->camera.
 	float cameraX = 0.0f;
 	float cameraY = 0.0f;
+
+	std::shared_ptr<Player> player;
 };
