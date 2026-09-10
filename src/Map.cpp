@@ -38,9 +38,15 @@ bool Map::PostUpdate()
 		// L07: TODO 5: Draw every tile in every layer
 		// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
 		// tile coordinates to world coordinates, then draw
+		// L09: TODO 7: This always uses the first tileset -- once
+		// GetTilesetFromTileId() exists, look the right one up per gid instead
 		const TileSet& tileSet = mapData.tilesets.front();
 
 		for (const auto& mapLayer : mapData.layers) {
+			// Helper layers (e.g. the collision mask) are never meant to be
+			// seen -- skip anything Tiled itself marked not visible.
+			if (!mapLayer.visible) continue;
+
 			for (int i = 0; i < mapData.width; i++) {
 				for (int j = 0; j < mapData.height; j++) {
 
@@ -141,6 +147,10 @@ bool Map::Load(std::string path, std::string fileName)
 			mapLayer.name = layerNode.attribute("name").as_string();
 			mapLayer.width = layerNode.attribute("width").as_int();
 			mapLayer.height = layerNode.attribute("height").as_int();
+			mapLayer.visible = layerNode.attribute("visible").as_bool(true);
+
+			// L09: TODO 5: Load this layer's custom properties
+			// ...
 
 			mapLayer.tiles.reserve((size_t)mapLayer.width * mapLayer.height);
 			for (pugi::xml_node tileNode : layerNode.child("data").children("tile"))
@@ -152,9 +162,12 @@ bool Map::Load(std::string path, std::string fileName)
 		}
 
 		// Temporary L08 placeholder: a few hand-placed platform colliders so
-		// there is something for the player to stand and jump on. L09 (Map
-		// collisions) replaces this with colliders derived from the map's
-		// own tile data instead of hardcoded pixel rectangles.
+		// there is something for the player to stand and jump on.
+		// L09: TODO 8: Replace this whole block with a loop that builds one
+		// rectangle collider per non-empty tile, for any layer whose
+		// "Collision" custom property is true (see the invisible
+		// "Collisions" layer in MapTemplate.tmx) -- colliders derived from
+		// the map's own tile data instead of hardcoded pixel rectangles.
 		Vector2D posC1 = Vector2D(224, 544);
 		int widthC1 = 256;
 		int heightC1 = 64;

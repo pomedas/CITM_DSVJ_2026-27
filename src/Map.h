@@ -8,6 +8,22 @@
 
 struct SDL_Texture;
 
+// L09: TODO 1: Add name/value to Property, and typed accessors below -- value
+// is a string so a property can hold a bool, an int, a float or text
+struct Properties
+{
+	struct Property
+	{
+		// ...
+	};
+
+	// L09: TODO 1: The properties belonging to a single map or layer node
+	// ...
+
+	// L09: TODO 2: Return the property with this name, or nullptr if none
+	// ...
+};
+
 // L07: TODO 1: Create a struct to hold information for a single map layer
 struct MapLayer
 {
@@ -15,7 +31,11 @@ struct MapLayer
 	std::string name;
 	int width;
 	int height;
+	bool visible;   // native TMX attribute; hides helper layers like the collision mask
 	std::vector<int> tiles;
+
+	// L09: TODO 3: Custom properties read from this layer's <properties> node
+	// ...
 
 	// L07: TODO 6: Return the gid at tile (i, j)
 	unsigned int Get(int i, int j) const
@@ -92,6 +112,12 @@ public:
 
 	// L07: TODO 8: Translate tile coordinates (i, j) into world (pixel) coordinates
 	Vector2D MapToWorld(int i, int j) const;
+
+	// L09: TODO 6: Return the tileset a gid belongs to, nullptr if none match
+	// ...
+
+	// L09: TODO 4: Parse a <properties> node's <property> children into properties
+	// ...
 
 public:
 	std::string mapFileName;
