@@ -172,7 +172,7 @@ void Engine::FinishUpdate()
         std::stringstream ss;
         ss << gameTitle << ": Av.FPS: " << std::fixed << std::setprecision(2) << averageFps
             << " Last sec frames: " << framesPerSecond
-            << " Last dt: " << std::fixed << std::setprecision(3) << dt
+            << " Last dt: " << std::fixed << std::setprecision(3) << (dt * 1000.0f) << " ms"
             << " Time since startup: " << secondsSinceStartup
             << " Frame Count: " << frameCount;
 

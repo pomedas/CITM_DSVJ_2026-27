@@ -87,7 +87,7 @@ public:
 	std::shared_ptr<Scene> scene;
 
 private:
-	// Delta time in milliseconds, computed once per frame in FinishUpdate().
+	// Delta time in seconds, computed once per frame in FinishUpdate().
 	float dt = 0.0f;
 
 	// Frames since startup.
