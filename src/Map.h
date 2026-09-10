@@ -144,6 +144,10 @@ public:
 	// L09: TODO 4: Parse a <properties> node's <property> children into properties
 	bool LoadProperties(const pugi::xml_node& node, Properties& properties);
 
+	// L10: TODO 9: Return the map's total size in pixels (width/height in
+	// tiles times tile size) -- used to clamp the camera to the map's edges
+	Vector2D GetMapSizeInPixels() const;
+
 public:
 	std::string mapFileName;
 	std::string mapPath;

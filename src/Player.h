@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entity.h"
+#include "Animation.h"
 #include <box2d/box2d.h>
 #include <SDL3/SDL.h>
 
@@ -37,6 +38,10 @@ private:
 	void ApplyPhysics();
 	void UpdatePosition();
 
+	// L10: TODO 8: Horizontal-only camera follow, routed through Scene's
+	// float camera position -- never render->camera.x directly
+	void UpdateCamera();
+
 public:
 
 	// Declare player parameters
@@ -55,4 +60,7 @@ public:
 
 private:
 	b2Vec2 velocity;
+
+	// L10: TODO 4: Player's animation clips, loaded from a TSX in Start()
+	AnimationSet anims;
 };

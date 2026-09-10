@@ -34,6 +34,11 @@ public:
 	// Physics -- that need it outside DoUpdate()'s Update(dt) call.
 	float GetDt() const { return dt; }
 
+	// A named child of <config> -- e.g. "player" -- for callers that aren't
+	// a Module and so don't get their slice handed to them automatically
+	// via LoadParameters() (Entities: see Entity::SetParameters()).
+	pugi::xml_node GetConfigNode(const char* name) const { return configFile.child("config").child(name); }
+
 	// Called before render is available
 	bool Awake();
 

@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include "Vector2D.h"
+#include "pugixml.hpp"
 
 class PhysBody;
 
@@ -46,6 +47,14 @@ public:
 	virtual bool CleanUp()
 	{
 		return true;
+	}
+
+	// L10: TODO 1: Store this entity's slice of config.xml, mirroring
+	// Module::LoadParameters -- called before Awake()/Start() run (the L04
+	// pending queue leaves a window for it), so both can read `parameters`.
+	virtual void SetParameters(pugi::xml_node params)
+	{
+		parameters = params;
 	}
 
 	virtual bool Destroy()
@@ -93,4 +102,7 @@ public:
 	// want our Entity class, maybe it's not renderable...
 	Vector2D position;
 	bool renderable = true;
+
+	// L10: TODO 1: This entity's slice of config.xml, set via SetParameters()
+	pugi::xml_node parameters;
 };

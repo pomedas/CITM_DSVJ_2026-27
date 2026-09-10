@@ -258,3 +258,12 @@ bool Map::LoadProperties(const pugi::xml_node& node, Properties& properties)
 	return true;
 }
 
+// L10: TODO 9: Return the map's total size in pixels
+Vector2D Map::GetMapSizeInPixels() const
+{
+	Vector2D sizeInPixels;
+	sizeInPixels.setX((float)(mapData.width * mapData.tileWidth));
+	sizeInPixels.setY((float)(mapData.height * mapData.tileHeight));
+	return sizeInPixels;
+}
+

@@ -32,6 +32,12 @@ public:
 	// Called before quitting
 	bool CleanUp();
 
+	// The L03 float camera position -- the only place that casts to int and
+	// writes render->camera, so nothing else (e.g. Player's camera follow)
+	// ever has to touch render->camera.x/y directly.
+	void SetCameraX(float x);
+	void SetCameraY(float y);
+
 private:
 	// Camera position kept as float so movement scaled by dt isn't lost to
 	// integer truncation; converted to int only when written into

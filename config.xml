@@ -16,4 +16,15 @@
     <resizable value="false"/>
     <fullscreen_window value="false"/>
   </window>
+
+  <!-- L10: TODO 3: Player tuning -- initial position stays in code (it's map
+       data, not player config; L15 loads it from the map instead). Animation
+       clip names (idle/move/jump) also stay in code: they come from this TSX's
+       own tile layout, not from anything config.xml could express. -->
+  <player>
+    <texture path="Assets/Textures/player2_spritesheet.png"/>
+    <animations tsx="Assets/Textures/player2_spritesheet.tsx"/>
+    <movement speed="4.0" jumpForce="2.5"/>
+    <frame width="32" height="32"/>
+  </player>
 </config>
