@@ -179,7 +179,7 @@ void Engine::FinishUpdate()
         // actually waits compared to what was expected
         PerfTimer delayTimer = PerfTimer();
         SDL_Delay(delay);
-        LOG("Wanted to wait %u ms, SDL_Delay() actually waited %f ms", delay, delayTimer.ReadMs());
+        //LOG("Wanted to wait %u ms, SDL_Delay() actually waited %f ms", delay, delayTimer.ReadMs());
     }
     else {
         delayRemainder = desiredDelay;
