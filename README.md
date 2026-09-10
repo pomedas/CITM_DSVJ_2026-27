@@ -1,94 +1,86 @@
-# L04 — Entity System (Solution)
+# L05 — Serialization
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L04_EntitySystem`. Builds on `L03_DeltaTime_Solution`.
-All seven TODOs are filled in — this is what your engine should look like at the
-end of the lecture.
+Builds on `L04_EntitySystem_Solution`. Every value that has been hardcoded so
+far — window resolution, vsync, target frame rate, the window title — moves
+into `config.xml`, parsed with [pugixml](https://pugixml.org/). TMX (Tiled's
+map format, from L06 onward) is already XML, so this is the same parser and
+the same dependency serving both config and maps.
+
+`config.xml` in this branch is empty — just the comment. Nothing reads it until
+the TODOs are done, so the game still runs exactly like `L04_EntitySystem_Solution`
+until you wire it up.
 
 ## The idea
 
-Up to now `Scene` has done everything itself. This lecture introduces `Entity` —
-a base class for anything that lives in the game world — and `EntityManager`, a
-new module that owns a list of entities and drives their lifecycle. `Player` is
-the first entity.
+`Module` gains a `LoadParameters(pugi::xml_node)` virtual: `Engine::Awake()`
+will load `config.xml` once, then hand each module its own slice of it (the
+node matching the module's `name`) before calling that module's `Awake()`. A
+module that needs config — `Window`, `Render` — reads its own
+`configParameters` node; one that doesn't just ignores the default
+implementation.
 
-Three ideas make this system worth the extra layer:
+## TODOs
 
-1. **`Update()` and `Draw()` are separate.** An entity's `Update(dt)` is logic
-   only; its `Draw()` is rendering only. `EntityManager` calls every entity's
-   `Update()` from its own `Update(dt)`, then every entity's `Draw()` from its
-   own `PostUpdate()` — after *all* entities have finished their logic for the
-   frame. Later in the course, frustum culling needs to skip drawing an
-   off-screen entity without also skipping its logic; if the two were still
-   merged, skipping the off-screen branch would skip both, and things like a
-   physics-synced position would go stale.
-2. **New entities initialise themselves.** Anything created after the game has
-   started — right now, just the player, created in `Scene::Awake()` — is
-   queued in `EntityManager::pending` and only moved into the live `entities`
-   list once `InitialisePending()` runs. That happens automatically from
-   `EntityManager::Start()` and `EntityManager::Update()`; nothing needs a
-   hand-written `entity->Start()` call anywhere else.
-3. **`Awake()` then `Start()`, batched.** `InitialisePending()` calls `Awake()`
-   on every entity in a batch before calling `Start()` on any of them. That
-   means a `Start()` can safely assume every entity created alongside it has
-   already had its `Awake()` — the same contract Unity uses, and the reason the
-   two callbacks exist as separate functions at all.
-
-## What each TODO does
-
-| Marker | File | Answer |
+| Marker | File | What to fill in |
 |---|---|---|
-| `L04: TODO 1` | `src/Engine.cpp`/`.h` | `entityManager` is instantiated and registered like any other module, right after `scene` and before `render` |
-| `L04: TODO 2` | `src/Player.cpp` `Awake()` | Sets the initial `position` |
-| `L04: TODO 3` | `src/Player.cpp` `Start()` | Loads `Assets/Textures/player1.png` |
-| `L04: TODO 4` | `src/EntityManager.cpp` `CreateEntity()` | Instantiates the right subclass by `EntityType`, queues it in `pending`, and returns it — an unknown type returns `nullptr` instead of a useless base `Entity` |
-| `L04: TODO 5` | `src/Scene.cpp` `Awake()` | Creates the player through `entityManager->CreateEntity()` |
-| `L04: TODO 6` | `src/Player.cpp` `Update()` | Moves the player with WASD, scaled by `dt` — logic only |
-| `L04: TODO 7` | `src/Player.cpp` `Draw()` | Renders `texture` at `position` — rendering only |
+| `L05: TODO 2` | `src/Engine.h`/`.cpp` | Declare a `pugi::xml_document` member; implement `LoadConfig()` with `load_file("config.xml")`, failing (return `false`) on a missing file, a parse error, or a missing `<config>` root; call it at the top of `Engine::Awake()` |
+| `L05: TODO 3` | `src/Engine.cpp` `Awake()` | Read `gameTitle` and `maxFrameDuration` from `<engine><title/>` and `<engine><targetFrameRate/>` |
+| `L05: TODO 4` | `src/Module.h`, `src/Engine.cpp` | Declare `Module::LoadParameters(pugi::xml_node)` (it should store the node in a `configParameters` member) and call it for every module in `Engine::Awake()`'s loop, before that module's own `Awake()` |
+| `L05: TODO 5` | `src/Render.cpp` `Awake()` | Load `vsync` from `<render><vsync/>` |
+| `L05: TODO 6` | `src/Window.cpp` `Awake()` | Load the resolution and the four window-mode flags from `<window>` instead of the hardcoded values below the marker |
 
-## Why the module order matters
+## Why LoadConfig() must fail loudly
 
-`entityManager` is registered after `scene` and before `render` (which is always
-last). `Render::PreUpdate()` clears the screen and `Render::PostUpdate()`
-presents it; since every module's `PostUpdate()` runs in registration order,
-`EntityManager::PostUpdate()` (which draws every entity) is guaranteed to run
-*before* `Render::PostUpdate()` presents the frame. Get the order wrong and
-entities would be drawn one frame late, or not at all.
+A missing or broken `config.xml` should stop the game at startup with a clear
+message, not run silently with a 0×0 window and an empty title. Cover exactly
+three cases as hard failures: file missing, parse error, and a missing
+`<config>` root — `Engine::Awake()` already propagates a `false` return up to
+`PlatformGame.cpp`'s `EngineState::FAIL` path, so no new machinery is needed.
+Name the file and pugixml's `result.description()` in the `LOG` so the failure
+is actionable.
 
-## Why `CreateEntity` can return `nullptr`
+An *individual* missing attribute inside an otherwise valid config (no `width`
+on `<resolution>`, say) is different: fall back to pugixml's own default-value
+overloads (`as_int(1280)`, `as_bool(false)`) and log a warning naming the
+missing key. One mistyped attribute shouldn't brick the whole game, but it
+should be impossible to miss in the log.
 
-The previous version always returned a real `Entity`, even for an unrecognised
-`EntityType` — a generic object with no texture and nothing to render, silently
-added to the entity list. Returning `nullptr` for an unknown type, and having
-`Scene::Awake()`'s `dynamic_pointer_cast` handle a `nullptr` result, means a typo
-in an `EntityType` fails loudly (nothing appears) instead of leaving a ghost
-entity nobody asked for.
+## config.xml: use attributes throughout
+
+Once you write the real `config.xml`, use one convention everywhere:
+`<title value="..."/>`, not `<title>...</title>`. This also matches TMX —
+don't mix element-text and attribute styles in the same file.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. A small player sprite
-appears near the top-left corner; move it with **W/A/S/D**. The background image
-and its arrow-key camera pan (from L03) still work exactly as before.
+The `PostBuildEvent` on all four configurations now also copies `config.xml`
+next to the built `.exe`, not just `Assets/` — `load_file("config.xml")`
+resolves against the working directory, so this matters as soon as you run the
+`.exe` directly instead of pressing F5 in Visual Studio. Open
+`PlatformGame.sln`, select **x64**, build and run — with `config.xml` still
+empty, nothing should look different from `L04_EntitySystem_Solution`.
 
 ## Read the code
 
-Start at `src/Entity.h` for the interface every entity implements, then
-`src/EntityManager.cpp` for how entities are created, initialised, updated and
-drawn. `src/Player.cpp` is the first (and so far only) concrete entity.
+Start at `Engine::Awake()` in `src/Engine.cpp` for where `LoadConfig()` and the
+per-module `LoadParameters()` calls need to go, then `src/Module.h` for the
+`LoadParameters()` contract every module will inherit, then `src/Window.cpp`
+and `src/Render.cpp` for the two modules that will actually use it.
 
 ## Homework
 
-- Compare this branch against `L04_EntitySystem` — the diff should be nothing
-  but the seven TODO bodies, no formatting or include churn.
-- `EntityManager::Awake()` iterates `entities`, but at the point `Awake()` runs,
-  is that list ever non-empty? Why does the method still exist?
-- Add a second `EntityType` (even a placeholder with no texture) and confirm
-  `CreateEntity` on `EntityType::UNKNOWN` still returns `nullptr` rather than a
-  ghost entity.
-- What would go wrong if `EntityManager::Start()` called `InitialisePending()`
-  *and then* looped over `entities` calling `Start()` again?
+- Fill in all five TODOs, write a real `config.xml`, and confirm the window
+  opens at the size and vsync setting you specify.
+- Rename `config.xml` temporarily and confirm `Engine::Awake()` fails with a
+  log message that names the missing file.
+- Delete just the `<config>` root tag (keep the file otherwise valid XML) and
+  confirm that also fails loudly, with a different message.
+- Delete a single attribute, like `width` on `<resolution>`, and confirm the
+  game still starts — with a default value and a warning in the log, not a
+  crash.
 
 ## Reference
 
-- Unity's `Awake`/`Start` execution order — <https://docs.unity3d.com/Manual/ExecutionOrder.html>
+- pugixml quick start — <https://pugixml.org/docs/quickstart.html>

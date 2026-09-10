@@ -69,9 +69,18 @@ bool Engine::Awake() {
 
     LOG("Engine::Awake");
 
+    // L05: TODO 2: Load config.xml before any module reads it
+    // ...
+
+    // L05: TODO 3: Read the title and target frame rate from the config file
+    // ...
+
     //Iterates the module list and calls Awake on each module
     bool result = true;
     for (const auto& module : moduleList) {
+        // L05: TODO 4: Load this module's parameters before Awake()
+        // ...
+
         result =  module->Awake();
         if (!result) {
 			break;
@@ -268,5 +277,16 @@ bool Engine::PostUpdate()
 
     return result;
 }
+
+// Load config from XML file
+bool Engine::LoadConfig()
+{
+    // L05: TODO 2: Load config.xml with load_file(), and fail loudly if it is
+    // missing, fails to parse, or has no <config> root -- a bad config should
+    // stop the game at startup, not run silently with zeroed-out settings
+    // ...
+    return true;
+}
+
 
 

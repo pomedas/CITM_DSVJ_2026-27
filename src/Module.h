@@ -50,6 +50,11 @@ public:
 		return true;
 	}
 
+	// L05: TODO 4: Declare a virtual LoadParameters(pugi::xml_node parameters)
+	// function here that stores the node in a pugi::xml_node configParameters
+	// member
+	// ...
+
 public:
 
 	std::string name;
