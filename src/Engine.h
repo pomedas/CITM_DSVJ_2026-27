@@ -17,6 +17,7 @@ class Textures;
 class Audio;
 class Scene;
 class Map;
+class Physics;
 class EntityManager;
 
 class Engine
@@ -26,8 +27,12 @@ public:
 	// Public method to get the instance of the Singleton
 	static Engine& GetInstance();
 
-	//	
+	//
 	void AddModule(std::shared_ptr<Module> module);
+
+	// Delta time in seconds for the current frame, for modules -- e.g.
+	// Physics -- that need it outside DoUpdate()'s Update(dt) call.
+	float GetDt() const { return dt; }
 
 	// Called before render is available
 	bool Awake();
@@ -92,6 +97,7 @@ public:
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
 	std::shared_ptr<Map> map;
+	std::shared_ptr<Physics> physics;
 	std::shared_ptr<EntityManager> entityManager;
 
 private:

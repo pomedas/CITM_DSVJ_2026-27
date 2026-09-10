@@ -1,5 +1,6 @@
 #include "EntityManager.h"
 #include "Player.h"
+#include "Item.h"
 #include "Engine.h"
 #include "Textures.h"
 #include "Scene.h"
@@ -56,6 +57,9 @@ std::shared_ptr<Entity> EntityManager::CreateEntity(EntityType type)
 	{
 		case EntityType::PLAYER:
 			entity = std::make_shared<Player>();
+			break;
+		case EntityType::ITEM:
+			entity = std::make_shared<Item>();
 			break;
 		default:
 			LOG("EntityManager::CreateEntity: unknown entity type");

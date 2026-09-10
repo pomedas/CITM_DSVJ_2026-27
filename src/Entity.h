@@ -4,9 +4,12 @@
 #include <string>
 #include "Vector2D.h"
 
+class PhysBody;
+
 enum class EntityType
 {
 	PLAYER,
+	ITEM,
 	UNKNOWN
 };
 
@@ -48,6 +51,17 @@ public:
 	virtual bool Destroy()
 	{
 		return true;
+	}
+
+	// Called by Physics::BeginContact()/EndContact() when a shape on this
+	// entity's body starts/stops touching another shape. Default no-op;
+	// override to react.
+	virtual void OnCollision(PhysBody* physA, PhysBody* physB)
+	{
+	}
+
+	virtual void OnCollisionEnd(PhysBody* physA, PhysBody* physB)
+	{
 	}
 
 	void Enable()
