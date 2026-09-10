@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "EntityManager.h"
 #include "Player.h"
+#include "Map.h"
 
 Scene::Scene() : Module()
 {
@@ -38,6 +39,10 @@ bool Scene::Start()
 	if (img == NULL) return false;
 
 	Engine::GetInstance().audio->PlayMusic("Assets/Audio/Music/level-iv-339695.wav");
+
+	// L06: TODO 7: Load the map through the map module
+	// ...
+
 	return true;
 }
 
