@@ -41,21 +41,28 @@ Engine::Engine() {
     // L07: registration order is also Update()/PostUpdate() (draw) order for
     // every module, so map is registered -- and therefore drawn -- before
     // scene and before entityManager.
-    // L08: physics must also be registered before map and scene: Scene::Start()
-    // calls Map::Load(), which creates the map's static colliders, and
-    // EntityManager::Start() initialises Player/Item, whose Start() creates
-    // their own bodies -- all of that needs physics->world to already exist.
+    // L08: physics->world is created in Physics::Awake(), not Start() --
+    // every module's Awake() runs before any module's Start(), so
+    // Map::Start() (which creates the map's static colliders) and
+    // EntityManager::Start() (which creates Player/Item, whose Start()
+    // creates their own bodies) see physics->world already alive no matter
+    // where physics sits in this list. That leaves physics free to be
+    // registered by draw order instead: it goes right before render, so its
+    // debug wireframes (drawn in PostUpdate(), toggled with F1) are drawn
+    // after the map's tiles and the entities' sprites instead of being
+    // immediately painted over by them.
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(textures));
     AddModule(std::static_pointer_cast<Module>(audio));
-    AddModule(std::static_pointer_cast<Module>(physics));
 
     AddModule(std::static_pointer_cast<Module>(map));
     AddModule(std::static_pointer_cast<Module>(scene));
 
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
+
+    AddModule(std::static_pointer_cast<Module>(physics));
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));

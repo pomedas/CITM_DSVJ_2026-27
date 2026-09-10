@@ -26,11 +26,18 @@ Physics::~Physics()
 	// You should do some memory cleaning here, if required
 }
 
-bool Physics::Start()
+bool Physics::Awake()
 {
 	LOG("Creating Physics 2D environment");
 
-	// Create a new World (3.x uses world defs)
+	// Created in Awake(), not Start(): every module's Awake() runs before any
+	// module's Start(), so Map::Start()/EntityManager::Start() -- which need
+	// physics->world to already exist -- see it ready regardless of where
+	// physics sits in the module registration order. That, in turn, lets
+	// physics be registered LATE (right before render) purely for draw
+	// order: its debug wireframes are drawn in PostUpdate(), and need to
+	// happen after Map's tiles and the entities' sprites or they get
+	// painted over immediately.
 	b2WorldDef wdef = b2DefaultWorldDef();
 	wdef.gravity.x = GRAVITY_X;
 	wdef.gravity.y = -GRAVITY_Y;

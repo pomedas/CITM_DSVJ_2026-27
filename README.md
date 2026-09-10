@@ -98,6 +98,23 @@ int w, int h)` attaches one via `b2MakeOffsetBox()` + `b2CreatePolygonShape()`,
 `isSensor = true`. Assignment 1 asks for ground and wall sensors — this is the
 tool; building the behaviour on top of it is your job there, not here.
 
+## Why physics is created in `Awake()` and registered right before `render`
+
+The debug wireframes (below) used to be invisible: `Physics` was registered
+before `map`/`scene`/`entityManager` (so that `physics->world` existed before
+`Map::Load()`'s colliders and `Player`/`Item`'s bodies needed it), and
+registration order is draw order. That put `Physics::PostUpdate()`'s
+`b2World_Draw()` call *before* the map's tiles and the entities' sprites, so
+every wireframe got painted over the instant those drew.
+
+The fix: `world = b2CreateWorld(...)` moved from `Physics::Start()` to
+`Physics::Awake()`. Every module's `Awake()` runs before any module's
+`Start()`, so `Map::Start()`/`EntityManager::Start()` see `physics->world`
+already alive no matter where `physics` sits in the registration list — the
+dependency that used to force `physics` early is gone. That frees it to be
+registered by draw order instead: right before `render`, so its debug draw
+happens *after* the map and the entities and stays visible on top of them.
+
 ## Small things fixed alongside the above
 
 - `METER_PER_PIXEL` is now `1.0f / PIXELS_PER_METER`, derived instead of a
