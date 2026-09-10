@@ -91,7 +91,7 @@ bool Scene::CleanUp()
 {
 	LOG("Freeing scene");
 
-	SDL_DestroyTexture(img);
+	Engine::GetInstance().textures->UnLoad(img);
 
 	return true;
 }
