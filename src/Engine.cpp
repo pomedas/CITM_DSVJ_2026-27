@@ -168,7 +168,7 @@ void Engine::FinishUpdate()
     // secondsSinceStartup
     frameCount++;
     secondsSinceStartup = startupTime.ReadSec();
-    dt = (float)frameTime.ReadMs();
+    dt = (float)(frameTime.ReadMs() / 1000.0);
 
     lastSecFrameCount++;
     if (lastSecFrameTime.ReadMs() > 1000.0) {
@@ -188,7 +188,7 @@ void Engine::FinishUpdate()
         std::stringstream ss;
         ss << gameTitle << ": Av.FPS: " << std::fixed << std::setprecision(2) << averageFps
             << " Last sec frames: " << framesPerSecond
-            << " Last dt: " << std::fixed << std::setprecision(3) << dt
+            << " Last dt: " << std::fixed << std::setprecision(3) << (dt * 1000.0f) << " ms"
             << " Time since startup: " << secondsSinceStartup
             << " Frame Count: " << frameCount;
 
