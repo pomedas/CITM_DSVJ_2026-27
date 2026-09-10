@@ -157,6 +157,27 @@ void Engine::PrepareUpdate()
 // ---------------------------------------------
 void Engine::FinishUpdate()
 {
+    // L03: TODO 1: Cap the framerate of the gameloop using maxFrameDuration.
+    // Compute how long this frame's work took (frameTime, in ms) and, if it
+    // finished early, SDL_Delay() the difference. Carry any fractional
+    // millisecond you cannot delay for into delayRemainder so it corrects the
+    // next frame instead of being discarded.
+    double currentDt = frameTime.ReadMs();
+    double desiredDelay = (double)maxFrameDuration - currentDt + delayRemainder;
+    if (desiredDelay > 0.0) {
+        Uint32 delay = (Uint32)desiredDelay;
+        delayRemainder = desiredDelay - (double)delay;
+
+        // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
+        // actually waits compared to what was expected
+        PerfTimer delayTimer = PerfTimer();
+        SDL_Delay(delay);
+        LOG("Wanted to wait %u ms, SDL_Delay() actually waited %f ms", delay, delayTimer.ReadMs());
+    }
+    else {
+        delayRemainder = desiredDelay;
+    }
+
     // L02: TODO 4: Calculate:
     // Amount of frames since startup
     // Amount of time since game start (use a low resolution timer)
