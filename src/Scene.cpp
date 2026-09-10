@@ -49,6 +49,17 @@ bool Scene::Update(float dt)
 	// Move cameraX/cameraY by camSpeed * dt (pixels per second), then write
 	// the rounded result into render->camera.x / render->camera.y.
 	// ...
+	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT)
+		Engine::GetInstance().render->camera.y -= 1;
+
+	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT)
+		Engine::GetInstance().render->camera.y += 1;
+
+	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT)
+		Engine::GetInstance().render->camera.x -= 1;
+
+	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT)
+		Engine::GetInstance().render->camera.x += 1;
 
 	//Get the size of the window
 	int windowW, windowH;
