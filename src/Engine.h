@@ -109,5 +109,10 @@ private:
 	// Maximum frame duration in milliseconds.
 	int maxFrameDuration = 16;
 
+	// Fractional millisecond left over from the last SDL_Delay() truncation,
+	// carried into the next frame so the cap converges on maxFrameDuration
+	// instead of running systematically fast.
+	double delayRemainder = 0.0;
+
 	std::string gameTitle = "Platformer Game";
 };
