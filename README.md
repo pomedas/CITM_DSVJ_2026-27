@@ -1,88 +1,91 @@
-# L06 — Tiled Formats (Solution)
+# L07 — TMX Drawing (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L06_Tiled_Formats`. Builds on `L05_Serialization_Solution`.
-All seven TODOs are filled in — this is what your engine should look like at the
-end of the lecture.
+The completed version of `L07_TileMap_Drawing`. Builds on
+`L06_Tiled_Formats_Solution`. All nine TODOs are filled in — this is what your
+engine should look like at the end of the lecture.
 
 ## The idea
 
-A new `Map` module parses a [Tiled](https://www.mapeditor.org/) `.tmx` file —
-itself XML, so this is the same `pugixml` from L05 doing a second job. This
-lecture reads the `<map>` node and every `<tileset>`'s image; drawing the map's
-actual tile layers is L07's job. For now, `Map::PostUpdate()` just draws each
-tileset's whole source image at `(0, 0)` so you can see it loaded.
+L06 parsed `<tileset>`. This lecture parses `<layer>` — the actual grid of
+tile IDs (gids) that makes up the map — and draws it: for every tile in every
+layer, look up its source rectangle in the tileset image and blit it at its
+world position. The map now fills the screen, so the `test.png` placeholder
+from L01 is retired (see below).
 
 ## What each TODO does
 
 | Marker | File | Answer |
 |---|---|---|
-| `L06: TODO 1` | `src/Map.h` | `MapData` holds the `<map>` node's own attributes (`width`, `height`, `tileWidth`, `tileHeight`) plus the tileset list; `Map::mapData` stores it |
-| `L06: TODO 2` | `src/Map.h`, `src/Map.cpp` `CleanUp()` | `TileSet` holds one `<tileset>`'s attributes plus its loaded texture; `CleanUp()` unloads every tileset's texture |
-| `L06: TODO 3` | `src/Map.cpp` `Load()` | Reads `width`/`height`/`tilewidth`/`tileheight` off the `<map>` node into `mapData` |
-| `L06: TODO 4` | `src/Map.cpp` `Load()` | Loads every `<tileset>` — its attributes and its `<image>` — into `mapData.tilesets`; a tileset whose image fails to load sets `ret = false` |
-| `L06: TODO 5` | `src/Map.cpp` `Load()` | `LOG()`s the parsed map and every tileset |
-| `L06: TODO 6` | `src/Map.cpp` `PostUpdate()` | Draws every tileset's texture at `(0, 0)` |
-| `L06: TODO 7` | `src/Scene.cpp` `Start()` | Calls `Engine::GetInstance().map->Load("Assets/Maps/", "MapTemplate.tmx")` |
+| `L07: TODO 1` | `src/Map.h` | `MapLayer` holds one `<layer>`'s `id`/`name`/`width`/`height` plus its flat `tiles` array |
+| `L07: TODO 2` | `src/Map.h`, `src/Map.cpp` `CleanUp()` | `MapData::layers` is a `std::vector<MapLayer>`; `CleanUp()` clears it |
+| `L07: TODO 3` | `src/Map.cpp` `Load()` | Iterates every `<layer>`, loads it, and `LOG()`s it alongside the tilesets |
+| `L07: TODO 4` | `src/Map.cpp` `Load()` | Reads one layer's attributes and every `<tile gid="…"/>` under `<data>` into `tiles` |
+| `L07: TODO 5` | `src/Map.cpp` `PostUpdate()` | The triple-nested loop: every layer, every tile position |
+| `L07: TODO 6` | `src/Map.h` | `MapLayer::Get(i, j)` — the gid at that tile position |
+| `L07: TODO 7` | `src/Map.h` | `TileSet::GetRect(gid)` — the gid's source rectangle within the tileset image, **`const`** |
+| `L07: TODO 8` | `src/Map.h`/`.cpp` | `Map::MapToWorld(i, j)` — tile coordinates times tile size, in pixels |
+| `L07: TODO 9` | `src/Map.cpp` `PostUpdate()` | Per tile: get the gid, look up its rect, convert to world coordinates, `DrawTexture()` |
 
-## Why a failed tileset image now fails the whole load
+### Why `GetRect()` must be `const`
 
-Previously, the tileset loop always finished with `ret = true`, so the
-`if (ret == true) ... else LOG("Error while parsing map file...")` below it
-could never take the `else` branch — dead code. Meanwhile `textures->Load()`
-returns `nullptr` for a missing image and nothing checked it, so a map whose
-PNG got renamed reported success and drew nothing a frame later with no
-explanation. This undoes L05, where a bad input was made to fail loudly.
+L06 decided `GetTilesetFromTileId()` (arriving at L09) returns `const TileSet*`
+— multiple tilesets means picking the right one by gid, and that lookup
+shouldn't let callers mutate the tileset it finds. Calling a non-`const`
+method through a `const TileSet*` does not compile. `GetRect()` doesn't need
+to mutate anything, so it costs nothing to mark `const` now rather than
+discover the break later.
 
-Now: a missing tileset image is `LOG`-ged by name and sets `ret = false`, which
-makes the previously-dead `else` branch reachable, and `Map::Load()` returns
-`false` — exactly the same "bad input fails loudly" contract L05 introduced for
-`config.xml`.
+### `std::vector<MapLayer>`, not pointers — same reasoning as `TileSet` at L06
 
-## Why `std::vector<TileSet>` instead of pointers
+`MapLayer` is a handful of `int`s, a `std::string`, and a `std::vector<int>` —
+still one owner (`MapData::layers`), still no reason to heap-allocate.
+`reserve()` matters more here than it did for tilesets: `tiles` itself can be
+large (`width * height` gids), so both the layer vector and each layer's tile
+vector are `reserve()`d before their fill loops.
 
-`TileSet` is seven `int`s, a `std::string` and a texture pointer — no
-polymorphism, no shared ownership, one owner (`MapData::tilesets`). None of the
-three reasons to heap-allocate apply, so `new TileSet()` bought an allocation,
-an indirection, and a manual `delete` loop in `CleanUp()` for nothing.
-`std::vector<TileSet>` — not `std::vector<std::unique_ptr<TileSet>>` — holds
-the structs directly; `reserve()` before the loop avoids reallocating while
-filling it. The vector is filled once in `Load()` and never touched again, so
-nothing needs the pointer stability a `std::list` would otherwise buy you
-either.
+### Retiring `test.png`
 
-Once the structs are values, `CleanUp()` reduces to exactly one job: unload
-every tileset's *texture* — the one resource that genuinely lives outside the
-struct and needs explicit release. Tangling that unload together with a
-`delete` loop (as the old code did) is exactly how it went missing in the
-first place.
+`img`, its load, its centred `DrawTexture()`, and its `CleanUp()` unload are
+all gone — along with the now-dead `Textures`/`Window` includes they were the
+only users of. This removal happened in **`L07_TileMap_Drawing`, the
+handout**, not here — the placeholder is scaffolding the lecture replaces, not
+behaviour students implement, so keeping it out of both branches identically
+keeps `git diff L07_TileMap_Drawing L07_TileMap_Drawing_Solution` pure TODO
+bodies. This is a deliberate exception to the usual Hard Rule 7 (handouts keep
+old working code); see the handout's commit message.
+
+### The module reorder
+
+`map` is now registered — and constructed — before `scene`, not after.
+Registration order is `Awake()`/`Start()`/`Update()`/`PostUpdate()` order for
+every module, so this is what makes the map draw before the player (registered
+later, via `entityManager`) instead of after it. The constructor now says so
+in a comment instead of leaving it as a silent line move.
 
 ## Build
 
 Open `PlatformGame.sln`, select **x64**, build and run. The desert tileset
-image should appear in the top-left corner, on top of the L03 background and
-behind the L04 player. Check the log for `Successfully parsed map XML file`
-followed by the tileset details.
+should now tile across the whole map instead of one image in the corner, with
+the player drawn on top of it.
 
 ## Read the code
 
-Start at `src/Map.h` for `MapData`/`TileSet`, then `Map::Load()` in
-`src/Map.cpp` for the parse, then `Map::PostUpdate()` for the (temporary,
-whole-image) draw.
+Start at `Map::PostUpdate()` in `src/Map.cpp` for the draw loop, then
+`TileSet::GetRect()` and `Map::MapToWorld()` in `src/Map.h`/`.cpp` for the two
+pieces of math it depends on.
 
 ## Homework
 
-- Compare this branch against `L06_Tiled_Formats` — the diff should be nothing
-  but the seven TODO bodies.
-- Rename `Assets/Maps/tmw_desert_spacing.png` temporarily and confirm
-  `Map::Load()` fails with a log naming the missing image, instead of silently
-  drawing nothing.
-- `Map` is registered before `EntityManager` in `Engine`'s module list. Given
-  that both now draw from `PostUpdate()`, what would change on screen if that
-  order were reversed?
+- Compare this branch against `L07_TileMap_Drawing` — the diff should be
+  nothing but the nine TODO bodies.
+- `Map::PostUpdate()` always uses `mapData.tilesets.front()`, the same
+  simplification L06 made. What breaks if `MapTemplate.tmx` had a second
+  tileset and some tiles' gids belonged to it?
+- Add a second `<layer>` to the TMX (Tiled will do this for you) and confirm
+  both draw, in the order they appear in the file.
 
 ## Reference
 
 - Tiled TMX format — <https://doc.mapeditor.org/en/stable/reference/tmx-map-format/>
-- pugixml quick start — <https://pugixml.org/docs/quickstart.html>
