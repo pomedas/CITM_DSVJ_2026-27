@@ -34,11 +34,10 @@ bool Map::PostUpdate()
 
 	if (mapLoaded) {
 
-		// L06: TODO 6: Iterate all tilesets and draw all their
-		// images at 0,0 (you should have only one tileset for now)
-		for (const auto& tileset : mapData.tilesets) {
-			Engine::GetInstance().render->DrawTexture(tileset.texture, 0, 0);
-		}
+		// L07: TODO 5: Draw every tile in every layer
+		// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
+		// tile coordinates to world coordinates, then draw
+		// ...
 	}
 
 	return ret;
@@ -54,6 +53,9 @@ bool Map::CleanUp()
 		Engine::GetInstance().textures->UnLoad(tileset.texture);
 	}
 	mapData.tilesets.clear();
+
+	// L07: TODO 2: Clear the layers
+	// ...
 
 	return true;
 }
@@ -113,6 +115,10 @@ bool Map::Load(std::string path, std::string fileName)
 
 			mapData.tilesets.push_back(tileSet);
 		}
+
+		// L07: TODO 3: Load every <layer>
+		// L07: TODO 4: Read one layer's attributes and its tile data
+		// ...
 
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
 		if (ret == true)

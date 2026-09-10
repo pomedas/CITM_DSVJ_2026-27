@@ -3,7 +3,6 @@
 #include "Module.h"
 #include <memory>
 
-struct SDL_Texture;
 class Player;
 
 class Scene : public Module
@@ -34,8 +33,6 @@ public:
 	bool CleanUp();
 
 private:
-	SDL_Texture* img;
-
 	// Camera position kept as float so movement scaled by dt isn't lost to
 	// integer truncation; converted to int only when written into
 	// render->camera.
