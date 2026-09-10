@@ -31,10 +31,13 @@ L04 and ignores gravity entirely — that's what you're about to replace.
 | `L08: TODO 5` | `src/Scene.cpp` | Create an `Item` through the entity manager and place it near `(200, 672)`, over one of the platforms |
 
 `physics` itself is already instantiated and registered in `Engine`'s
-constructor, before `map` and `scene` — that wiring is *not* a TODO. Since
-`Map::Load()`'s platform colliders need `physics->world` to already exist,
-turning the registration into an exercise would mean the given map-collider
-code crashes on a fresh checkout before you'd even reached the TODOs.
+constructor, right before `render` — that wiring is *not* a TODO.
+`physics->world` is created in `Physics::Awake()`, which runs before any
+module's `Start()` regardless of registration order, so `Map::Start()`'s
+platform colliders and `Player`/`Item`'s bodies always find it ready. That's
+also why `physics` is registered *late*: its debug draw (`Physics::PostUpdate()`,
+toggled with **F1**) needs to happen after the map and the entities draw, or
+the wireframes get painted over the instant those draw on top of them.
 
 ## Why the frame's `dt` gets a fixed-timestep accumulator
 

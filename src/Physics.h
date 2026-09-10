@@ -62,7 +62,7 @@ public:
 	~Physics();
 
 	// Main module steps
-	bool Start();
+	bool Awake();
 	bool PreUpdate();
 	bool PostUpdate();
 	bool CleanUp();
