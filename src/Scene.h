@@ -33,10 +33,4 @@ public:
 
 private:
 	SDL_Texture* img;
-
-	// Camera position kept as float so movement scaled by dt isn't lost to
-	// integer truncation; converted to int only when written into
-	// render->camera.
-	float cameraX = 0.0f;
-	float cameraY = 0.0f;
 };
