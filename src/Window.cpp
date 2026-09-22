@@ -36,7 +36,7 @@ bool Window::Awake()
 		// TODO Get the values from the config file
 		width = 1280;
 		height = 720;
-		scale = 1;
+		scale = 1.0f;
 
 		if (fullscreen == true)        flags |= SDL_WINDOW_FULLSCREEN;
 		if (borderless == true)        flags |= SDL_WINDOW_BORDERLESS;
@@ -94,7 +94,7 @@ void Window::GetWindowSize(int& width, int& height) const
 	height = this->height;
 }
 
-int Window::GetScale() const
+float Window::GetScale() const
 {
 	return scale;
 }

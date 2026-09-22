@@ -46,24 +46,22 @@ bool Scene::PreUpdate()
 bool Scene::Update(float dt)
 {
 	// L03: TODO 3: Make the camera movement independent of framerate.
-	// Move cameraX/cameraY by camSpeed * dt (pixels per second), then write
-	// the rounded result into render->camera.x / render->camera.y.
+	//   - Declare a camSpeed of 200.0f (pixels per second).
+	//   - Multiply camSpeed by dt before adding/subtracting it below.
+	//   - camera.x / camera.y are float (SDL_FRect), so just assign the result.
 	float camSpeed = 200.0f;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT)
-		cameraY -= camSpeed * dt;
+		Engine::GetInstance().render->camera.y -= camSpeed * dt;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT)
-		cameraY += camSpeed * dt;
+		Engine::GetInstance().render->camera.y += camSpeed * dt;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT)
-		cameraX -= camSpeed * dt;
+		Engine::GetInstance().render->camera.x -= camSpeed * dt;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT)
-		cameraX += camSpeed * dt;
-
-	Engine::GetInstance().render->camera.x = (int)cameraX;
-	Engine::GetInstance().render->camera.y = (int)cameraY;
+		Engine::GetInstance().render->camera.x += camSpeed * dt;
 
 	//Get the size of the window
 	int windowW, windowH;
