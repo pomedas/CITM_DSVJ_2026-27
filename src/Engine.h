@@ -88,7 +88,7 @@ public:
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
 	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
-// ...
+	// ...
 
 private:
 	// Delta time in seconds, computed once per frame in FinishUpdate().

@@ -36,5 +36,6 @@ public:
 private:
 	SDL_Texture* img;
 
-	std::shared_ptr<Player> player;
+	// L04: TODO 3a: Declare a player as a member of Scene.h
+	// ...
 };

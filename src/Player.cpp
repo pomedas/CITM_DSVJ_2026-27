@@ -22,21 +22,21 @@ bool Player::Awake()
 
 bool Player::Start()
 {
-	// L04: TODO 3: Load the player texture
+	// L04: TODO 2: Load the player texture
 	// ...
 	return true;
 }
 
 bool Player::Update(float dt)
 {
-	// L04: TODO 6: Move the player with WASD, independent of framerate
+	// L04: TODO 5: Move the player with WASD, independent of framerate
 	// ...
 	return true;
 }
 
 bool Player::Draw()
 {
-	// L04: TODO 7: Render the player texture at its current position
+	// L04: TODO 4: Render the player texture at its current position
 	// ...
 	return true;
 }
@@ -44,6 +44,6 @@ bool Player::Draw()
 bool Player::CleanUp()
 {
 	LOG("Cleanup player");
-	Engine::GetInstance().textures->UnLoad(texture);
+	// ...
 	return true;
 }
