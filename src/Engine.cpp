@@ -30,7 +30,7 @@ Engine::Engine() {
     scene = std::make_shared<Scene>();
 
     // L04: TODO 1: Register the EntityManager module
-    entityManager = std::make_shared<EntityManager>();
+	entityManager = std::make_shared<EntityManager>();
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
@@ -41,7 +41,7 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(scene));
 
     // L04: TODO 1: Register the EntityManager module
-    AddModule(std::static_pointer_cast<Module>(entityManager));
+	AddModule(std::static_pointer_cast<Module>(entityManager));
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));
@@ -149,9 +149,6 @@ bool Engine::CleanUp() {
         }
     }
 
-    // L02: TODO 3: Log the result of the timer
-    LOG("Timer App CleanUp(): %f", timer.ReadMSec());
-
     return result;
 }
 
@@ -184,7 +181,7 @@ void Engine::FinishUpdate()
 		//SDL_Delay((Uint32)waitTime);
         //SDL_DelayNS((Uint64)(waitTime * 1000000));
         SDL_DelayPrecise((Uint64)(waitTime*1000000));
-        LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
+        //LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
     }
 
     // L02: TODO 4: Calculate:
