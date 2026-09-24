@@ -6,8 +6,6 @@
 #include "Window.h"
 #include "Scene.h"
 #include "Log.h"
-#include "EntityManager.h"
-#include "Player.h"
 
 Scene::Scene() : Module()
 {

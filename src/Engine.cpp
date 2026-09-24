@@ -10,7 +10,6 @@
 #include "Textures.h"
 #include "Audio.h"
 #include "Scene.h"
-#include "EntityManager.h"
 
 
 // Constructor
@@ -149,9 +148,6 @@ bool Engine::CleanUp() {
         }
     }
 
-    // L02: TODO 3: Log the result of the timer
-    LOG("Timer App CleanUp(): %f", timer.ReadMSec());
-
     return result;
 }
 
@@ -184,7 +180,7 @@ void Engine::FinishUpdate()
 		//SDL_Delay((Uint32)waitTime);
         //SDL_DelayNS((Uint64)(waitTime * 1000000));
         SDL_DelayPrecise((Uint64)(waitTime*1000000));
-        LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
+        //LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
     }
 
     // L02: TODO 4: Calculate:
