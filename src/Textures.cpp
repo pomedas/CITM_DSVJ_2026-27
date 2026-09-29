@@ -84,6 +84,8 @@ SDL_Texture* const Textures::LoadSurface(SDL_Surface* surface)
 	}
 	else
 	{
+		// Pixel art: nearest filtering avoids blur and texel bleed between tiles.
+		SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 		textures.push_back(texture);
 	}
 
