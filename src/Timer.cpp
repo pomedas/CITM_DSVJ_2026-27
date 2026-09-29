@@ -14,15 +14,15 @@ Timer::Timer()
 
 void Timer::Start()
 {
-	//...
+	startTime = SDL_GetTicks();
 }
 
 int Timer::ReadSec() const
 {
-	return 0;
+	return (int)((SDL_GetTicks() - startTime) / 1000);
 }
 
 float Timer::ReadMSec() const
 {
-	return 0.0f;
+	return (float)(SDL_GetTicks() - startTime);
 }

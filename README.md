@@ -1,11 +1,9 @@
-# L02 — Framerate
+# L02 — Framerate (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-Builds on `L01_Simple_Engine`. The engine still does nothing new on screen — this
-lecture is about measuring what it is already doing: how long each part of
-startup takes, how long a frame takes, and how many frames per second the game
-is actually running at.
+The completed version of `L02_Framerate`. All four TODOs are filled in — this is
+what your engine should look like at the end of the lecture.
 
 ## The idea
 
@@ -28,28 +26,30 @@ underlying measurements are still taken every frame — only the string building
 and the `SetTitle()` call are throttled, since both cost more than the frame
 budget they are supposed to be measuring.
 
-## TODOs
+## What each TODO does
 
-| Marker | File | What to fill in |
+| Marker | File | Answer |
 |---|---|---|
-| `L02: TODO 1` | `src/Timer.cpp` | `Start()`, `ReadSec()`, `ReadMSec()` — one line each |
-| `L02: TODO 2` | `src/PerfTimer.cpp` | Constructor, `Start()`, `ReadMs()`, `ReadTicks()` — one line each |
-| `L02: TODO 3` | `src/Engine.cpp` | Wrap the body of the constructor, `Awake()`, `Start()` and `CleanUp()` in a `Timer` and `LOG()` the result |
+| `L02: TODO 1` | `src/Timer.cpp` | `Start()` stores `SDL_GetTicks()`; `ReadSec()`/`ReadMSec()` return the difference against `SDL_GetTicks()` now |
+| `L02: TODO 2` | `src/PerfTimer.cpp` | Same shape as `Timer`, using `SDL_GetPerformanceCounter()` and the shared `static frequency` |
+| `L02: TODO 3` | `src/Engine.cpp` | A local `Timer` measures each call; `LOG()` reports the elapsed ms after the call's work is done |
 | `L02: TODO 4` | `src/Engine.cpp` `FinishUpdate()` | Frame count, elapsed time, `dt`, last-second frame count, and the true lifetime average FPS |
 
 `PerfTimer::frequency` is `static` — the performance-counter frequency is a
 property of the machine, not of any one timer instance, so every `PerfTimer`
 shares the same value instead of re-querying it.
 
-Average FPS is a **true lifetime average**: total frames divided by total
-elapsed time, not a running blend of the last two readings. Compute it from
-`Timer::ReadMSec()` (milliseconds), not from a truncated integer seconds count —
-otherwise the average reads 0 for the entire first second of the game's life.
+Average FPS is a **true lifetime average**: `frameCount / (elapsedMs / 1000.0f)`,
+guarded against a divide-by-zero on the very first frame, computed from
+`Timer::ReadMSec()` rather than the truncated `secondsSinceStartup` — the integer
+version reads 0 for the entire first second of the game's life, which would make
+the average undefined right when it is most visible.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. Watch the window title —
-it should settle into a stable number once `TODO 4` is filled in.
+Open `PlatformGame.sln`, select **x64**, build and run. The window title settles
+into a stable average FPS within the first second and updates about 4 times a
+second from then on.
 
 ## Read the code
 
@@ -59,11 +59,12 @@ throttled title update.
 
 ## Homework
 
-- Fill in all four TODOs and confirm the title updates with sensible numbers.
-- Explain out loud why `Timer` uses `SDL_GetTicks()` and `PerfTimer` uses
-  `SDL_GetPerformanceCounter()` instead of both using the same call.
+- Compare this branch against `L02_Framerate` — the diff should be nothing but
+  timer-body code and `LOG()` calls, no formatting or include churn.
 - The average FPS is computed over the game's entire life. What would you need
   to change to show a rolling average over just the last 5 seconds instead?
+- `maxFrameDuration` is declared in `Engine.h` but unused so far — it is there
+  for `L03_DeltaTime`, which caps frame duration with it.
 
 ## Reference
 
