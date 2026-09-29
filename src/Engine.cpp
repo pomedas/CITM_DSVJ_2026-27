@@ -157,26 +157,36 @@ void Engine::PrepareUpdate()
 // ---------------------------------------------
 void Engine::FinishUpdate()
 {
+    // L03: TODO 1: Cap the framerate of the gameloop using maxFrameDuration.
+    // Compute how long this frame's work took (frameTime, in ms) and, if it
+    // finished early, SDL_Delay() the difference. 
+
+    // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
+    // actually waits compared to what was expected
+    // ...
+
+
     // L02: TODO 4: Calculate:
     // Amount of frames since startup
+    frameCount++;
+
     // Amount of time since game start (use a low resolution timer)
-    // Amount of ms took the last update (dt)
+    secondsSinceStartup = startupTime.ReadSec();
+
+    // Amount of seconds took the last update (dt)
+    dt = (float) frameTime.ReadMs() / 1000.0f;
+
     // Amount of frames during the last second
-    // True lifetime average FPS: divide total frames by total elapsed time,
+    lastSecFrameCount++;
+
+    // Average FPS: divide total frames by total elapsed time,
     // guarded against divide-by-zero on the very first frame, using the
     // millisecond-resolution Timer rather than the truncated integer
-    // secondsSinceStartup
-    frameCount++;
-    secondsSinceStartup = startupTime.ReadSec();
-    dt = (float)(frameTime.ReadMs() / 1000.0);
-
-    lastSecFrameCount++;
     if (lastSecFrameTime.ReadMs() > 1000.0) {
         lastSecFrameTime.Start();
         framesPerSecond = lastSecFrameCount;
         lastSecFrameCount = 0;
     }
-
     float elapsedMs = startupTime.ReadMSec();
     averageFps = (elapsedMs > 0.0f) ? (frameCount / (elapsedMs / 1000.0f)) : 0.0f;
 
@@ -188,7 +198,7 @@ void Engine::FinishUpdate()
         std::stringstream ss;
         ss << gameTitle << ": Av.FPS: " << std::fixed << std::setprecision(2) << averageFps
             << " Last sec frames: " << framesPerSecond
-            << " Last dt: " << std::fixed << std::setprecision(3) << (dt * 1000.0f) << " ms"
+            << " Last dt: " << std::fixed << std::setprecision(3) << dt * 1000.0 << " ms"
             << " Time since startup: " << secondsSinceStartup
             << " Frame Count: " << frameCount;
 
