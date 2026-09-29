@@ -1,13 +1,17 @@
-# L04 — Entity System
+# L04 — Entity System (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-Builds on `L03_DeltaTime_Solution`. Up to now `Scene` has done everything
-itself — this lecture introduces `Entity`, a base class for anything that lives
-in the game world, and `EntityManager`, a new module that owns a list of
-entities and drives their lifecycle. `Player` is the first entity.
+The completed version of `L04_EntitySystem`. Builds on `L03_DeltaTime_Solution`.
+All seven TODOs are filled in — this is what your engine should look like at the
+end of the lecture.
 
 ## The idea
+
+Up to now `Scene` has done everything itself. This lecture introduces `Entity` —
+a base class for anything that lives in the game world — and `EntityManager`, a
+new module that owns a list of entities and drives their lifecycle. `Player` is
+the first entity.
 
 Three ideas make this system worth the extra layer:
 
@@ -17,73 +21,71 @@ Three ideas make this system worth the extra layer:
    own `PostUpdate()` — after *all* entities have finished their logic for the
    frame. Later in the course, frustum culling needs to skip drawing an
    off-screen entity without also skipping its logic; if the two were still
-   merged, skipping the off-screen branch would skip both.
+   merged, skipping the off-screen branch would skip both, and things like a
+   physics-synced position would go stale.
 2. **New entities initialise themselves.** Anything created after the game has
    started — right now, just the player, created in `Scene::Awake()` — is
    queued in `EntityManager::pending` and only moved into the live `entities`
    list once `InitialisePending()` runs. That happens automatically from
-   `EntityManager::Start()` and `EntityManager::Update()`; you never need a
+   `EntityManager::Start()` and `EntityManager::Update()`; nothing needs a
    hand-written `entity->Start()` call anywhere else.
-3. **`Awake()` then `Start()`, batched.** `InitialisePending()` (already
-   written for you in `EntityManager.cpp`) calls `Awake()` on every entity in a
-   batch before calling `Start()` on any of them. That means a `Start()` can
-   safely assume every entity created alongside it has already had its
-   `Awake()` — the same contract Unity uses.
+3. **`Awake()` then `Start()`, batched.** `InitialisePending()` calls `Awake()`
+   on every entity in a batch before calling `Start()` on any of them. That
+   means a `Start()` can safely assume every entity created alongside it has
+   already had its `Awake()` — the same contract Unity uses, and the reason the
+   two callbacks exist as separate functions at all.
 
-## TODOs
+## What each TODO does
 
-| Marker | File | What to fill in |
+| Marker | File | Answer |
 |---|---|---|
-| `L04: TODO 1` | `src/Engine.cpp`/`.h` | Instantiate `entityManager` and register it as a module, like `scene` or `audio` |
-| `L04: TODO 2` | `src/Player.cpp` `Awake()` | Set the player's initial `position` |
-| `L04: TODO 3` | `src/Player.cpp` `Start()` | Load `Assets/Textures/player1.png` into `texture` |
-| `L04: TODO 4` | `src/EntityManager.cpp` `CreateEntity()` | Instantiate the right subclass by `EntityType`, queue it in `pending`, and return it — an unknown type should return `nullptr` |
-| `L04: TODO 5` | `src/Scene.cpp` `Awake()` | Create the player through `entityManager->CreateEntity()` |
-| `L04: TODO 6` | `src/Player.cpp` `Update()` | Move the player with WASD, scaled by `dt` — logic only, no rendering |
-| `L04: TODO 7` | `src/Player.cpp` `Draw()` | Render `texture` at `position` — rendering only, no movement |
+| `L04: TODO 1` | `src/Engine.cpp`/`.h` | `entityManager` is instantiated and registered like any other module, right after `scene` and before `render` |
+| `L04: TODO 2` | `src/Player.cpp` `Awake()` | Sets the initial `position` |
+| `L04: TODO 3` | `src/Player.cpp` `Start()` | Loads `Assets/Textures/player1.png` |
+| `L04: TODO 4` | `src/EntityManager.cpp` `CreateEntity()` | Instantiates the right subclass by `EntityType`, queues it in `pending`, and returns it — an unknown type returns `nullptr` instead of a useless base `Entity` |
+| `L04: TODO 5` | `src/Scene.cpp` `Awake()` | Creates the player through `entityManager->CreateEntity()` |
+| `L04: TODO 6` | `src/Player.cpp` `Update()` | Moves the player with WASD, scaled by `dt` — logic only |
+| `L04: TODO 7` | `src/Player.cpp` `Draw()` | Renders `texture` at `position` — rendering only |
 
-`Entity.h` and `EntityManager.h`/`.cpp` are otherwise complete — the pending
-queue, the two-pass `Awake`-then-`Start`, and the `Update`/`Draw` split are
-engine plumbing, not something you need to write. Your work is in `Player.cpp`,
-`EntityManager::CreateEntity()`, and the two-line `Engine` registration.
+## Why the module order matters
 
-### Where TODO 1 goes
+`entityManager` is registered after `scene` and before `render` (which is always
+last). `Render::PreUpdate()` clears the screen and `Render::PostUpdate()`
+presents it; since every module's `PostUpdate()` runs in registration order,
+`EntityManager::PostUpdate()` (which draws every entity) is guaranteed to run
+*before* `Render::PostUpdate()` presents the frame. Get the order wrong and
+entities would be drawn one frame late, or not at all.
 
-`entityManager` needs to be created and registered exactly like the other
-modules just above it — `make_shared` it, then `AddModule` it — but it must go
-**before** `render` (which is always registered last). `Render::PostUpdate()`
-presents the frame, and modules run their `PostUpdate()` in registration order,
-so anything that should draw before the frame is presented has to be registered
-earlier than `render`.
+## Why `CreateEntity` can return `nullptr`
 
-### Why `CreateEntity` should be able to return `nullptr`
-
-Don't fall back to constructing a plain `Entity` for an unrecognised
-`EntityType` — that produces a generic object with no texture and nothing to
-render, silently added to the entity list. Return `nullptr` instead, and let
-the caller (see `Scene::Awake()` in the reference solution) handle it.
+The previous version always returned a real `Entity`, even for an unrecognised
+`EntityType` — a generic object with no texture and nothing to render, silently
+added to the entity list. Returning `nullptr` for an unknown type, and having
+`Scene::Awake()`'s `dynamic_pointer_cast` handle a `nullptr` result, means a typo
+in an `EntityType` fails loudly (nothing appears) instead of leaving a ghost
+entity nobody asked for.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. Before the TODOs are
-filled in, the game looks exactly like `L03_DeltaTime_Solution` — background
-image, arrow-key camera pan — because nothing yet creates a player. Once TODOs
-1, 4 and 5 are done, a player sprite should appear; TODO 2 sets where it starts,
-TODO 6/7 make it move and actually draw.
+Open `PlatformGame.sln`, select **x64**, build and run. A small player sprite
+appears near the top-left corner; move it with **W/A/S/D**. The background image
+and its arrow-key camera pan (from L03) still work exactly as before.
 
 ## Read the code
 
 Start at `src/Entity.h` for the interface every entity implements, then
-`src/EntityManager.cpp` to see how entities are created, initialised, updated
-and drawn — everything there except `CreateEntity()`'s switch is already
-written. `src/Player.cpp` is the first (and so far only) concrete entity.
+`src/EntityManager.cpp` for how entities are created, initialised, updated and
+drawn. `src/Player.cpp` is the first (and so far only) concrete entity.
 
 ## Homework
 
-- Fill in all seven TODOs and confirm the player moves independently of frame
-  rate, the same way the L03 camera does.
+- Compare this branch against `L04_EntitySystem` — the diff should be nothing
+  but the seven TODO bodies, no formatting or include churn.
 - `EntityManager::Awake()` iterates `entities`, but at the point `Awake()` runs,
   is that list ever non-empty? Why does the method still exist?
+- Add a second `EntityType` (even a placeholder with no texture) and confirm
+  `CreateEntity` on `EntityType::UNKNOWN` still returns `nullptr` rather than a
+  ghost entity.
 - What would go wrong if `EntityManager::Start()` called `InitialisePending()`
   *and then* looped over `entities` calling `Start()` again?
 

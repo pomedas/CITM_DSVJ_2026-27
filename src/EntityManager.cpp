@@ -50,9 +50,19 @@ std::shared_ptr<Entity> EntityManager::CreateEntity(EntityType type)
 {
 	std::shared_ptr<Entity> entity = nullptr;
 
-	// L04: TODO 3b: Instantiate the entity for this type, add it to the
+	// L04: TODO 3a: Instantiate the entity for this type, add it to the
 	// pending queue, and return it -- or return nullptr for an unknown type
-	// ...
+	switch (type)
+	{
+	case EntityType::PLAYER:
+		entity = std::make_shared<Player>();
+		break;
+	default:
+		LOG("Error in EntityManager::CreateEntity: Unknown entity type");
+		return nullptr;
+	}
+
+	pending.push_back(entity);
 
 	return entity;
 }
