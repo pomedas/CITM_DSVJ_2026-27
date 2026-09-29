@@ -164,7 +164,21 @@ void Engine::FinishUpdate()
     // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
     // actually waits compared to what was expected
     // ...
+    float maxFrameDuration = 1000.0f / targetFrameRate;
+	float currenDt = (float) frameTime.ReadMs();
+    if (currenDt < maxFrameDuration) {
 
+        //Wait time in ms
+        float waitTime = (float) (maxFrameDuration - currenDt);
+
+        // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
+        // actually waits compared to what was expected
+        PerfTimer delayTimer = PerfTimer();
+		//SDL_Delay((Uint32)waitTime);
+        //SDL_DelayNS((Uint64)(waitTime * 1000000));
+        SDL_DelayPrecise((Uint64)(waitTime*1000000));
+        LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
+    }
 
     // L02: TODO 4: Calculate:
     // Amount of frames since startup
@@ -173,8 +187,8 @@ void Engine::FinishUpdate()
     // Amount of time since game start (use a low resolution timer)
     secondsSinceStartup = startupTime.ReadSec();
 
-    // Amount of seconds took the last update (dt)
-    dt = (float) frameTime.ReadMs() / 1000.0f;
+	// Amount of ms took the last update (dt) - tranformed to seconds
+    dt = (float)frameTime.ReadMs() / 1000.0f;
 
     // Amount of frames during the last second
     lastSecFrameCount++;

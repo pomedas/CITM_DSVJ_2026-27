@@ -106,8 +106,8 @@ private:
 	float averageFps = 0.0f;
 	int secondsSinceStartup = 0;
 
-	// target Frame rate
-	int targetFrameRate = 60;
+	// Target frame rate, in frames per second.
+	float targetFrameRate = 60;
 
 	std::string gameTitle = "Platformer Game";
 };
