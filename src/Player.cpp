@@ -16,20 +16,20 @@ Player::~Player()
 bool Player::Awake()
 {
 	// L04: TODO 2: Initialize the player's position
-	position = Vector2D(0, 0);
+	position = Vector2D(100.0f, 100.0f);
 	return true;
 }
 
 bool Player::Start()
 {
-	// L04: TODO 3: Load the player texture
+	// L04: TODO 2: Load the player texture
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
 	return true;
 }
 
 bool Player::Update(float dt)
 {
-	// L04: TODO 6: Move the player with WASD, independent of framerate
+	// L04: TODO 5: Move the player with WASD, independent of framerate
 	float speed = 200.0f;
 
 	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_W) == KEY_REPEAT)
@@ -49,7 +49,7 @@ bool Player::Update(float dt)
 
 bool Player::Draw()
 {
-	// L04: TODO 7: Render the player texture at its current position
+	// L04: TODO 4: Render the player texture at its current position
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX(), (int)position.getY());
 	return true;
 }

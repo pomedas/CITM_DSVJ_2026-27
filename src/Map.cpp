@@ -192,4 +192,3 @@ Vector2D Map::MapToWorld(int x, int y) const
 
 	return ret;
 }
-
