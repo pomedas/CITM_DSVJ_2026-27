@@ -32,18 +32,7 @@ public:
 	// Called before quitting
 	bool CleanUp();
 
-	// The L03 float camera position -- the only place that casts to int and
-	// writes render->camera, so nothing else (e.g. Player's camera follow)
-	// ever has to touch render->camera.x/y directly.
-	void SetCameraX(float x);
-	void SetCameraY(float y);
-
 private:
-	// Camera position kept as float so movement scaled by dt isn't lost to
-	// integer truncation; converted to int only when written into
-	// render->camera.
-	float cameraX = 0.0f;
-	float cameraY = 0.0f;
-
+	// L04: TODO 3a: Declare a player as a member of Scene.h
 	std::shared_ptr<Player> player;
 };

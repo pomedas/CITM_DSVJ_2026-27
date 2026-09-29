@@ -257,4 +257,3 @@ bool Map::LoadProperties(const pugi::xml_node& node, Properties& properties)
 
 	return true;
 }
-

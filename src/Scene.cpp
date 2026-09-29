@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "EntityManager.h"
 #include "Player.h"
+#include "Entity.h"
 #include "Item.h"
 #include "Map.h"
 
@@ -24,7 +25,7 @@ bool Scene::Awake()
 	LOG("Loading Scene");
 	bool ret = true;
 
-	// L04: TODO 5: Create the player through the entity manager
+	// L04: TODO 3a: Instantiate the player through the entity manager
 	player = std::dynamic_pointer_cast<Player>(Engine::GetInstance().entityManager->CreateEntity(EntityType::PLAYER));
 
 	// L10: TODO 2: Hand the player its <player> config.xml section -- works
@@ -60,38 +61,24 @@ bool Scene::PreUpdate()
 bool Scene::Update(float dt)
 {
 	// L03: TODO 3: Make the camera movement independent of framerate.
-	// Move cameraX/cameraY by camSpeed * dt (pixels per second), then write
-	// the rounded result into render->camera.x / render->camera.y.
+	//   - Declare a camSpeed of 200.0f (pixels per second).
+	//   - Multiply camSpeed by dt before adding/subtracting it below.
+	//   - camera.x / camera.y are float (SDL_FRect), so just assign the result.
 	float camSpeed = 200.0f;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT)
-		cameraY -= camSpeed * dt;
+		Engine::GetInstance().render->camera.y -= camSpeed * dt;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT)
-		cameraY += camSpeed * dt;
+		Engine::GetInstance().render->camera.y += camSpeed * dt;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT)
-		cameraX -= camSpeed * dt;
+		Engine::GetInstance().render->camera.x -= camSpeed * dt;
 
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT)
-		cameraX += camSpeed * dt;
-
-	SetCameraX(cameraX);
-	SetCameraY(cameraY);
+		Engine::GetInstance().render->camera.x += camSpeed * dt;
 
 	return true;
-}
-
-void Scene::SetCameraX(float x)
-{
-	cameraX = x;
-	Engine::GetInstance().render->camera.x = (int)cameraX;
-}
-
-void Scene::SetCameraY(float y)
-{
-	cameraY = y;
-	Engine::GetInstance().render->camera.y = (int)cameraY;
 }
 
 // Called each loop iteration

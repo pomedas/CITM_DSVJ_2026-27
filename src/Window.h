@@ -25,7 +25,7 @@ public:
 	void GetWindowSize(int& width, int& height) const;
 
 	// Retrieve window scale
-	int GetScale() const;
+	float GetScale() const;
 
 public:
 	// The window we'll be rendering to
@@ -34,5 +34,5 @@ public:
 	std::string title;
 	int width = 1280;
 	int height = 720;
-	int scale = 1;
+	float scale = 1.0f;
 };
