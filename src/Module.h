@@ -51,7 +51,9 @@ public:
 		return true;
 	}
 
-	// L05: TODO 4: Store this module's slice of config.xml, read in Engine::Awake()
+	// L05: TODO 4: Declare a virtual LoadParameters(pugi::xml_node parameters)
+	// function here that stores the node in a pugi::xml_node configParameters
+	// member
 	virtual bool LoadParameters(pugi::xml_node parameters)
 	{
 		configParameters = parameters;
