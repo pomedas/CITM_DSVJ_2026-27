@@ -38,15 +38,16 @@ private:
 	void ApplyPhysics();
 	void UpdatePosition();
 
-	// L10: TODO 8: Horizontal-only camera follow, routed through Scene's
-	// float camera position -- never render->camera.x directly
+	// L10: TODO 8: Horizontal-only camera follow -- writes camera.x
+	// directly, in float; the camera is SDL_FRect since L01 so there is no
+	// truncation to avoid and no need to route this through anything else
 	void UpdateCamera();
 
 public:
 
 	// Declare player parameters
 	float speed = 4.0f;
-	SDL_Texture* texture = NULL;
+	SDL_Texture* texture;
 
 	int texW, texH;
 

@@ -266,4 +266,3 @@ Vector2D Map::GetMapSizeInPixels() const
 	sizeInPixels.setY((float)(mapData.height * mapData.tileHeight));
 	return sizeInPixels;
 }
-

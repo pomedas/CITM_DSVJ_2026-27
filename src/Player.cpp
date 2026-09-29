@@ -6,9 +6,7 @@
 #include "Render.h"
 #include "Log.h"
 #include "Physics.h"
-#include "Scene.h"
 #include "Map.h"
-#include "Window.h"
 
 Player::Player() : Entity(EntityType::PLAYER)
 {
@@ -136,16 +134,16 @@ void Player::UpdateCamera() {
 	// L10: TODO 8: Horizontal-only follow (no vertical -- jumping would
 	// otherwise fight a Y follow), quarter mark rather than dead centre:
 	// the classic side-scroller composition, showing more of what's ahead
-	// than behind. Routed through Scene::SetCameraX() -- the one place that
-	// casts to int and writes render->camera (L03) -- never render->camera.x
-	// directly, which would reintroduce the truncation L03 removed.
+	// than behind. Writes render->camera.x directly -- it is a float
+	// (SDL_FRect since L01) and Render rounds at draw time, so there is no
+	// truncation to guard against here.
 	Vector2D mapSize = Engine::GetInstance().map->GetMapSizeInPixels();
 	float camW = (float)Engine::GetInstance().render->camera.w;
 	float limitLeft = camW / 4.0f;
 	float limitRight = mapSize.getX() - camW * 3.0f / 4.0f;
 
 	if (position.getX() - limitLeft > 0 && position.getX() < limitRight) {
-		Engine::GetInstance().scene->SetCameraX(camW / 4.0f - position.getX());
+		Engine::GetInstance().render->camera.x = camW / 4.0f - position.getX();
 	}
 }
 
