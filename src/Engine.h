@@ -64,6 +64,9 @@ private:
 
 	// Call modules after each loop iteration
 	bool PostUpdate();
+	
+	// Load config file
+	bool LoadConfig();
 
 	std::list<std::shared_ptr<Module>> moduleList;
 
@@ -114,4 +117,7 @@ private:
 	float targetFrameRate = 60;
 
 	std::string gameTitle = "Platformer Game";
+
+	// L05: TODO 2: Declare a pugi::xml_document member to hold config.xml
+	// ...
 };

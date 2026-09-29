@@ -30,6 +30,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="config.xml">
+      <Filter>Configuration FIles</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="src\Audio.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
@@ -113,11 +118,11 @@
     <ClInclude Include="src\EntityManager.h">
       <Filter>Source Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="src\Player.h">
+    <ClInclude Include="src\Entity.h">
       <Filter>Source Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\Entity.h">
-      <Filter>Source Files\Engine</Filter>
+    <ClInclude Include="src\Player.h">
+      <Filter>Source Files\Game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

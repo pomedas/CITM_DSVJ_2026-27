@@ -30,7 +30,7 @@ Engine::Engine() {
     scene = std::make_shared<Scene>();
 
     // L04: TODO 1: Register the EntityManager module
-	entityManager = std::make_shared<EntityManager>();
+    entityManager = std::make_shared<EntityManager>();
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
@@ -41,7 +41,7 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(scene));
 
     // L04: TODO 1: Register the EntityManager module
-	AddModule(std::static_pointer_cast<Module>(entityManager));
+    AddModule(std::static_pointer_cast<Module>(entityManager));
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));
@@ -68,10 +68,18 @@ bool Engine::Awake() {
     Timer timer = Timer();
 
     LOG("Engine::Awake");
+	
+	// L05: TODO 2: Load config.xml before any module reads it
+    // ...
+
+    // L05: TODO 3: Read the title and target frame rate from the config file
+    // ...
 
     //Iterates the module list and calls Awake on each module
     bool result = true;
     for (const auto& module : moduleList) {
+		// L05: TODO 4: Load this module's parameters before Awake()
+        // ...
         result =  module->Awake();
         if (!result) {
 			break;
@@ -149,6 +157,9 @@ bool Engine::CleanUp() {
         }
     }
 
+    // L02: TODO 3: Log the result of the timer
+    LOG("Timer App CleanUp(): %f", timer.ReadMSec());
+
     return result;
 }
 
@@ -165,9 +176,6 @@ void Engine::FinishUpdate()
     // Compute how long this frame's work took (frameTime, in ms) and, if it
     // finished early, SDL_Delay() the difference.
 
-    // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
-    // actually waits compared to what was expected
-    // ...
     float maxFrameDuration = 1000.0f / targetFrameRate;
 	float currenDt = (float) frameTime.ReadMs();
     if (currenDt < maxFrameDuration) {
@@ -267,6 +275,16 @@ bool Engine::PostUpdate()
     }
 
     return result;
+}
+
+// Load config from XML file
+bool Engine::LoadConfig()
+{
+    // L05: TODO 2: Load config.xml with load_file(), and fail loudly if it is
+    // missing, fails to parse, or has no <config> root -- a bad config should
+    // stop the game at startup, not run silently with zeroed-out settings
+    // ...
+    return true;
 }
 
 
