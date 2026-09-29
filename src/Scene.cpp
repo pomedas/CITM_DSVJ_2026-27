@@ -6,6 +6,7 @@
 #include "Window.h"
 #include "Scene.h"
 #include "Log.h"
+// ...
 
 Scene::Scene() : Module()
 {
@@ -22,6 +23,9 @@ bool Scene::Awake()
 {
 	LOG("Loading Scene");
 	bool ret = true;
+
+	// L04: TODO 3a: Instantiate the player through the entity manager
+	// ...
 
 	return ret;
 }

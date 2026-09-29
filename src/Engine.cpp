@@ -11,7 +11,6 @@
 #include "Audio.h"
 #include "Scene.h"
 
-
 // Constructor
 Engine::Engine() {
 
@@ -28,6 +27,9 @@ Engine::Engine() {
     audio = std::make_shared<Audio>();
     scene = std::make_shared<Scene>();
 
+    // L04: TODO 1: Register the EntityManager module
+    // ...
+
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
     AddModule(std::static_pointer_cast<Module>(window));
@@ -35,6 +37,9 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(textures));
     AddModule(std::static_pointer_cast<Module>(audio));
     AddModule(std::static_pointer_cast<Module>(scene));
+
+    // L04: TODO 1: Register the EntityManager module
+    // ...
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));
@@ -142,9 +147,6 @@ bool Engine::CleanUp() {
         }
     }
 
-    // L02: TODO 3: Log the result of the timer
-    LOG("Timer App CleanUp(): %f", timer.ReadMSec());
-
     return result;
 }
 
@@ -159,7 +161,7 @@ void Engine::FinishUpdate()
 {
     // L03: TODO 1: Cap the framerate of the gameloop using maxFrameDuration.
     // Compute how long this frame's work took (frameTime, in ms) and, if it
-    // finished early, SDL_Delay() the difference. 
+    // finished early, SDL_Delay() the difference.
 
     // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
     // actually waits compared to what was expected
@@ -177,7 +179,7 @@ void Engine::FinishUpdate()
 		//SDL_Delay((Uint32)waitTime);
         //SDL_DelayNS((Uint64)(waitTime * 1000000));
         SDL_DelayPrecise((Uint64)(waitTime*1000000));
-        LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
+        //LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
     }
 
     // L02: TODO 4: Calculate:
