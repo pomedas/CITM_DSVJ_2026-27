@@ -27,6 +27,9 @@ bool Window::Awake()
 	else
 	{
 		// Create window
+		// L05: TODO 6: Load fullscreen/borderless/resizable/fullscreen_window
+		// and the window resolution from config.xml
+
 		Uint32 flags = 0;
 		bool fullscreen = false;
 		bool borderless = false;
