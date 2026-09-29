@@ -2,22 +2,6 @@
 #include "Log.h"
 #include "Engine.h"
 
-// Reads an int attribute, logging a warning and falling back to `def` if it's missing.
-static int ConfigInt(const pugi::xml_node& node, const char* attr, int def)
-{
-	pugi::xml_attribute a = node.attribute(attr);
-	if (a.empty()) LOG("config.xml: missing '%s' on <%s>, using default %d", attr, node.name(), def);
-	return a.as_int(def);
-}
-
-// Reads a bool attribute, logging a warning and falling back to `def` if it's missing.
-static bool ConfigBool(const pugi::xml_node& node, const char* attr, bool def)
-{
-	pugi::xml_attribute a = node.attribute(attr);
-	if (a.empty()) LOG("config.xml: missing '%s' on <%s>, using default %s", attr, node.name(), def ? "true" : "false");
-	return a.as_bool(def);
-}
-
 Window::Window() : Module()
 {
 	window = NULL;
@@ -45,20 +29,28 @@ bool Window::Awake()
 		// Create window
 		// L05: TODO 6: Load fullscreen/borderless/resizable/fullscreen_window
 		// and the window resolution from config.xml
+
 		Uint32 flags = 0;
-		bool fullscreen = ConfigBool(configParameters.child("fullscreen"), "value", false);
-		bool borderless = ConfigBool(configParameters.child("borderless"), "value", false);
-		bool resizable = ConfigBool(configParameters.child("resizable"), "value", false);
-		bool fullscreen_window = ConfigBool(configParameters.child("fullscreen_window"), "value", false);
+		bool fullscreen = false;
+		bool borderless = false;
+		bool resizable = false;
+		bool fullscreen_window = false;
 
-		pugi::xml_node resolution = configParameters.child("resolution");
-		width = ConfigInt(resolution, "width", 1280);
-		height = ConfigInt(resolution, "height", 720);
-		scale = ConfigInt(resolution, "scale", 1);
+		// TODO Get the values from the config file
+		width = configParameters.child("resolution").attribute("width").as_int();
+		height = configParameters.child("resolution").attribute("height").as_int();
+		scale = configParameters.child("resolution").attribute("scale").as_float();
 
+		fullscreen = configParameters.child("fullscreen").attribute("value").as_bool();
 		if (fullscreen == true)        flags |= SDL_WINDOW_FULLSCREEN;
+
+		borderless = configParameters.child("borderless").attribute("value").as_bool();
 		if (borderless == true)        flags |= SDL_WINDOW_BORDERLESS;
+
+		resizable = configParameters.child("resizable").attribute("value").as_bool();
 		if (resizable == true)         flags |= SDL_WINDOW_RESIZABLE;
+
+		fullscreen_window = configParameters.child("fullscreen_window").attribute("value").as_bool();
 
 		// SDL3: SDL_CreateWindow(title, w, h, flags). Set position separately.
 		window = SDL_CreateWindow("Platform Game", width, height, flags);
@@ -112,7 +104,7 @@ void Window::GetWindowSize(int& width, int& height) const
 	height = this->height;
 }
 
-int Window::GetScale() const
+float Window::GetScale() const
 {
 	return scale;
 }

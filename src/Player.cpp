@@ -16,13 +16,13 @@ Player::~Player()
 bool Player::Awake()
 {
 	// L04: TODO 2: Initialize the player's position
-	position = Vector2D(0, 0);
+	position = Vector2D(100.0f, 100.0f);
 	return true;
 }
 
 bool Player::Start()
 {
-	// L04: TODO 3: Load the player texture
+	// L04: TODO 2: Load the player texture
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
 
 	// L08: TODO 1: Create the player's physics body -- a capsule, not a
@@ -37,7 +37,7 @@ bool Player::Start()
 
 bool Player::Update(float dt)
 {
-	// L04: TODO 6: Move the player with WASD, independent of framerate
+	// L04: TODO 5: Move the player with WASD, independent of framerate
 	// L08: TODO 1: Once the player has a physics body, replace this direct
 	// position edit with physics-driven movement instead -- see
 	// GetPhysicsValues()/Move()/Jump()/ApplyPhysics() in the reference solution
@@ -60,7 +60,7 @@ bool Player::Update(float dt)
 
 bool Player::Draw()
 {
-	// L04: TODO 7: Render the player texture at its current position
+	// L04: TODO 4: Render the player texture at its current position
 	// L08: TODO 1: Once pbody exists, position is the body's CENTER -- offset
 	// by half the sprite size when drawing
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX(), (int)position.getY());

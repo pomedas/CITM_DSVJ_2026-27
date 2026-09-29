@@ -526,7 +526,7 @@ void Physics::DrawCircleCb(b2Vec2 center, float radius, b2HexColor /*color*/, vo
 {
 	auto& r = *Engine::GetInstance().render;
 	r.DrawCircle(METERS_TO_PIXELS(center.x), METERS_TO_PIXELS(center.y),
-		METERS_TO_PIXELS(radius) * Engine::GetInstance().window->GetScale(),
+		(int)(METERS_TO_PIXELS(radius) * Engine::GetInstance().window->GetScale()),
 		255, 255, 255);
 }
 

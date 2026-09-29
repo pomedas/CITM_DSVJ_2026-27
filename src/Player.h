@@ -31,7 +31,7 @@ public:
 
 	// Declare player parameters
 	float speed = 5.0f;
-	SDL_Texture* texture = NULL;
+	SDL_Texture* texture;
 
 	// L08: TODO 1: Add a physics body to the player
 	// ...
