@@ -37,8 +37,8 @@ bool Window::Awake()
 		bool fullscreen_window = false;
 
 		// TODO Get the values from the config file
-		width = configParameters.child("resolution").attribute("width").as_float();
-		height = configParameters.child("resolution").attribute("height").as_float();
+		width = configParameters.child("resolution").attribute("width").as_int();
+		height = configParameters.child("resolution").attribute("height").as_int();
 		scale = configParameters.child("resolution").attribute("scale").as_float();
 
 		fullscreen = configParameters.child("fullscreen").attribute("value").as_bool();
