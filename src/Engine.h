@@ -16,6 +16,7 @@ class Render;
 class Textures;
 class Audio;
 class Scene;
+// L04: TODO 1: Add a forward declaration to the EntityManager class
 class EntityManager;
 
 class Engine
@@ -64,7 +65,7 @@ private:
 
 	// Call modules after each loop iteration
 	bool PostUpdate();
-
+	
 	// Load config file
 	bool LoadConfig();
 
@@ -90,6 +91,7 @@ public:
 	std::shared_ptr<Textures> textures;
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
+	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
 	std::shared_ptr<EntityManager> entityManager;
 
 private:
@@ -112,16 +114,11 @@ private:
 	float averageFps = 0.0f;
 	int secondsSinceStartup = 0;
 
-	// Maximum frame duration in milliseconds.
-	int maxFrameDuration = 16;
-
-	// Fractional millisecond left over from the last SDL_Delay() truncation,
-	// carried into the next frame so the cap converges on maxFrameDuration
-	// instead of running systematically fast.
-	double delayRemainder = 0.0;
+	// Target frame rate, in frames per second.
+	float targetFrameRate = 60;
 
 	std::string gameTitle = "Platformer Game";
 
-	// L05: TODO 2: Parsed contents of config.xml
+	// L05: TODO 2: Declare a pugi::xml_document member to hold config.xml
 	pugi::xml_document configFile;
 };

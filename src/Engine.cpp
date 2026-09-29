@@ -68,8 +68,8 @@ bool Engine::Awake() {
     Timer timer = Timer();
 
     LOG("Engine::Awake");
-
-    // L05: TODO 2: Load config.xml before any module reads it
+	
+	// L05: TODO 2: Load config.xml before any module reads it
     if (!LoadConfig()) {
         return false;
     }
@@ -86,18 +86,17 @@ bool Engine::Awake() {
     }
 
     pugi::xml_attribute rateAttr = engineNode.child("targetFrameRate").attribute("value");
-    int targetFrameRate = rateAttr.as_int();
-    if (rateAttr.empty() || targetFrameRate <= 0) {
-        LOG("config.xml: missing or invalid engine/targetFrameRate@value, using default %d ms/frame", maxFrameDuration);
+    if (rateAttr.empty()) {
+        LOG("config.xml: missing or invalid engine/targetFrameRate@value, using default %d ms/frame", targetFrameRate);
     }
     else {
-        maxFrameDuration = 1000 / targetFrameRate;
+        targetFrameRate = rateAttr.as_float();
     }
 
     //Iterates the module list and calls Awake on each module
     bool result = true;
     for (const auto& module : moduleList) {
-        // L05: TODO 4: Load this module's parameters before Awake()
+		// L05: TODO 4: Load this module's parameters before Awake()
         module->LoadParameters(configFile.child("config").child(module->name.c_str()));
 
         result =  module->Awake();
@@ -194,45 +193,45 @@ void Engine::FinishUpdate()
 {
     // L03: TODO 1: Cap the framerate of the gameloop using maxFrameDuration.
     // Compute how long this frame's work took (frameTime, in ms) and, if it
-    // finished early, SDL_Delay() the difference. Carry any fractional
-    // millisecond you cannot delay for into delayRemainder so it corrects the
-    // next frame instead of being discarded.
-    double currentDt = frameTime.ReadMs();
-    double desiredDelay = (double)maxFrameDuration - currentDt + delayRemainder;
-    if (desiredDelay > 0.0) {
-        Uint32 delay = (Uint32)desiredDelay;
-        delayRemainder = desiredDelay - (double)delay;
+    // finished early, SDL_Delay() the difference.
+
+    float maxFrameDuration = 1000.0f / targetFrameRate;
+	float currenDt = (float) frameTime.ReadMs();
+    if (currenDt < maxFrameDuration) {
+
+        //Wait time in ms
+        float waitTime = (float) (maxFrameDuration - currenDt);
 
         // L03: TODO 2: Measure accurately the amount of time SDL_Delay()
         // actually waits compared to what was expected
         PerfTimer delayTimer = PerfTimer();
-        SDL_Delay(delay);
-        //LOG("Wanted to wait %u ms, SDL_Delay() actually waited %f ms", delay, delayTimer.ReadMs());
-    }
-    else {
-        delayRemainder = desiredDelay;
+		//SDL_Delay((Uint32)waitTime);
+        //SDL_DelayNS((Uint64)(waitTime * 1000000));
+        SDL_DelayPrecise((Uint64)(waitTime*1000000));
+        //LOG("waitTime: %f ms, delayTimer: %f ms, difference: %f", waitTime, delayTimer.ReadMs(), waitTime - delayTimer.ReadMs());
     }
 
     // L02: TODO 4: Calculate:
     // Amount of frames since startup
+    frameCount++;
+
     // Amount of time since game start (use a low resolution timer)
-    // Amount of ms took the last update (dt)
+    secondsSinceStartup = startupTime.ReadSec();
+
+	// Amount of ms took the last update (dt) - tranformed to seconds
+    dt = (float)frameTime.ReadMs() / 1000.0f;
+
     // Amount of frames during the last second
-    // True lifetime average FPS: divide total frames by total elapsed time,
+    lastSecFrameCount++;
+
+    // Average FPS: divide total frames by total elapsed time,
     // guarded against divide-by-zero on the very first frame, using the
     // millisecond-resolution Timer rather than the truncated integer
-    // secondsSinceStartup
-    frameCount++;
-    secondsSinceStartup = startupTime.ReadSec();
-    dt = (float)(frameTime.ReadMs() / 1000.0);
-
-    lastSecFrameCount++;
     if (lastSecFrameTime.ReadMs() > 1000.0) {
         lastSecFrameTime.Start();
         framesPerSecond = lastSecFrameCount;
         lastSecFrameCount = 0;
     }
-
     float elapsedMs = startupTime.ReadMSec();
     averageFps = (elapsedMs > 0.0f) ? (frameCount / (elapsedMs / 1000.0f)) : 0.0f;
 
@@ -244,7 +243,7 @@ void Engine::FinishUpdate()
         std::stringstream ss;
         ss << gameTitle << ": Av.FPS: " << std::fixed << std::setprecision(2) << averageFps
             << " Last sec frames: " << framesPerSecond
-            << " Last dt: " << std::fixed << std::setprecision(3) << (dt * 1000.0f) << " ms"
+            << " Last dt: " << std::fixed << std::setprecision(3) << dt * 1000.0 << " ms"
             << " Time since startup: " << secondsSinceStartup
             << " Frame Count: " << frameCount;
 
@@ -318,6 +317,5 @@ bool Engine::LoadConfig()
     LOG("config.xml parsed without errors");
     return true;
 }
-
 
 
