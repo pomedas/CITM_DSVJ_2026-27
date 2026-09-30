@@ -37,13 +37,20 @@ bool Window::Awake()
 		bool fullscreen_window = false;
 
 		// TODO Get the values from the config file
-		width = 1280;
-		height = 720;
-		scale = 1.0f;
+		width = configParameters.child("resolution").attribute("width").as_int();
+		height = configParameters.child("resolution").attribute("height").as_int();
+		scale = configParameters.child("resolution").attribute("scale").as_float();
 
+		fullscreen = configParameters.child("fullscreen").attribute("value").as_bool();
 		if (fullscreen == true)        flags |= SDL_WINDOW_FULLSCREEN;
+
+		borderless = configParameters.child("borderless").attribute("value").as_bool();
 		if (borderless == true)        flags |= SDL_WINDOW_BORDERLESS;
+
+		resizable = configParameters.child("resizable").attribute("value").as_bool();
 		if (resizable == true)         flags |= SDL_WINDOW_RESIZABLE;
+
+		fullscreen_window = configParameters.child("fullscreen_window").attribute("value").as_bool();
 
 		// SDL3: SDL_CreateWindow(title, w, h, flags). Set position separately.
 		window = SDL_CreateWindow("Platform Game", width, height, flags);

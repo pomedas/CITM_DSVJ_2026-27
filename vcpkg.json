@@ -3,6 +3,7 @@
     "dependencies": [
         "libjpeg-turbo",
         "libpng",
+        "pugixml",
         "sdl3",
         {
             "name": "sdl3-image",

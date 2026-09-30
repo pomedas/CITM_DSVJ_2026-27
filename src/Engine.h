@@ -6,6 +6,7 @@
 #include "Module.h"
 #include "Timer.h"
 #include "PerfTimer.h"
+#include "pugixml.hpp"
 
 
 // Modules
@@ -119,5 +120,5 @@ private:
 	std::string gameTitle = "Platformer Game";
 
 	// L05: TODO 2: Declare a pugi::xml_document member to hold config.xml
-	// ...
+	pugi::xml_document configFile;
 };
