@@ -31,7 +31,7 @@ bool Scene::Awake()
 	// L10: TODO 2: Hand the player its <player> config.xml section -- works
 	// because the L04 pending queue defers Awake()/Start() until later, so
 	// there's a window between construction and Awake() to set this first
-	// ...
+	player->SetParameters(Engine::GetInstance().GetConfigNode("player"));
 
 	// L08: TODO 5: Create an item through the entity manager, to test picking it up
 	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
