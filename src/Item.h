@@ -30,5 +30,5 @@ private:
 	int texW, texH;
 
 	// L08: TODO 4: Add a physics body to the item
-	// ...
+	PhysBody* pbody;
 };

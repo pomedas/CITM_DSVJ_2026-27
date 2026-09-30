@@ -29,7 +29,8 @@ bool Scene::Awake()
 	player = std::dynamic_pointer_cast<Player>(Engine::GetInstance().entityManager->CreateEntity(EntityType::PLAYER));
 
 	// L08: TODO 5: Create an item through the entity manager, to test picking it up
-	// ...
+	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
+	item->position = Vector2D(200, 672);
 
 	return ret;
 }
