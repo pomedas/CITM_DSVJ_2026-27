@@ -1,9 +1,7 @@
 #include "Engine.h"
 #include "Input.h"
-#include "Textures.h"
 #include "Audio.h"
 #include "Render.h"
-#include "Window.h"
 #include "Scene.h"
 #include "Log.h"
 #include "EntityManager.h"
@@ -14,7 +12,6 @@
 Scene::Scene() : Module()
 {
 	name = "scene";
-	img = nullptr;
 }
 
 // Destructor
@@ -36,9 +33,6 @@ bool Scene::Awake()
 // Called before the first frame
 bool Scene::Start()
 {
-	img = Engine::GetInstance().textures->Load("Assets/Textures/test.png");
-	if (img == NULL) return false;
-
 	Engine::GetInstance().audio->PlayMusic("Assets/Audio/Music/level-iv-339695.wav");
 
 	// L06: TODO 7: Load the map through the map module
@@ -74,17 +68,6 @@ bool Scene::Update(float dt)
 	if(Engine::GetInstance().input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT)
 		Engine::GetInstance().render->camera.x += camSpeed * dt;
 
-	//Get the size of the window
-	int windowW, windowH;
-	Engine::GetInstance().window->GetWindowSize(windowW, windowH);
-
-	//Get the size of the texture
-	int texW, texH;
-	Engine::GetInstance().textures->GetSize(img, texW, texH);
-
-	// Renders the image in the center of the screen
-	Engine::GetInstance().render->DrawTexture(img, windowW /2 - texW / 2, windowH /2 - texH / 2);
-
 	return true;
 }
 
@@ -103,8 +86,6 @@ bool Scene::PostUpdate()
 bool Scene::CleanUp()
 {
 	LOG("Freeing scene");
-
-	Engine::GetInstance().textures->UnLoad(img);
 
 	return true;
 }

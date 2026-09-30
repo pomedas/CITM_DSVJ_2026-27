@@ -28,20 +28,23 @@ Engine::Engine() {
     render = std::make_shared<Render>();
     textures = std::make_shared<Textures>();
     audio = std::make_shared<Audio>();
-    scene = std::make_shared<Scene>();
     map = std::make_shared<Map>();
+    scene = std::make_shared<Scene>();
 
     // L04: TODO 1: Register the EntityManager module
     entityManager = std::make_shared<EntityManager>();
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
+    // L07: registration order is also Update()/PostUpdate() (draw) order for
+    // every module, so map is registered -- and therefore drawn -- before
+    // scene and before entityManager.
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(textures));
     AddModule(std::static_pointer_cast<Module>(audio));
-    AddModule(std::static_pointer_cast<Module>(scene));
     AddModule(std::static_pointer_cast<Module>(map));
+    AddModule(std::static_pointer_cast<Module>(scene));
 
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
