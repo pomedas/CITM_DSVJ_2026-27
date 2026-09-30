@@ -10,6 +10,7 @@
 #include "Textures.h"
 #include "Audio.h"
 #include "Scene.h"
+#include "Map.h"
 #include "EntityManager.h"
 
 
@@ -28,6 +29,7 @@ Engine::Engine() {
     textures = std::make_shared<Textures>();
     audio = std::make_shared<Audio>();
     scene = std::make_shared<Scene>();
+    map = std::make_shared<Map>();
 
     // L04: TODO 1: Register the EntityManager module
     entityManager = std::make_shared<EntityManager>();
@@ -39,6 +41,7 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(textures));
     AddModule(std::static_pointer_cast<Module>(audio));
     AddModule(std::static_pointer_cast<Module>(scene));
+    AddModule(std::static_pointer_cast<Module>(map));
 
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
