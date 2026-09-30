@@ -17,14 +17,25 @@ Player::~Player()
 
 bool Player::Awake()
 {
-	position = Vector2D(64, 64);
+	// L10: initial position stays in code (see TODO 3) -- it's map data,
+	// not player config, and L15 loads it from the map instead. Away from
+	// the left wall (L09's Collisions layer): spawning at the old (64, 64)
+	// sat the capsule right against it.
+	position = Vector2D(300, 300);
 	return true;
 }
 
 bool Player::Start()
 {
+	// L10: TODO 3: Read texture, frame size and tuning from config.xml
+	// instead of hardcoding them. GetSize() is not the fix for texW/texH --
+	// the real texture (a spritesheet) would return the whole sheet's size,
+	// not one frame's.
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
 	Engine::GetInstance().textures->GetSize(texture, texW, texH);
+
+	// L10: TODO 4: Load this entity's animations from a TSX
+	// ...
 
 	// L08: TODO 1: Create the player's physics body -- a capsule, not a
 	// circle, with fixed rotation so it doesn't roll. width == height for
@@ -52,6 +63,13 @@ bool Player::Update(float dt)
 	ApplyPhysics();
 	UpdatePosition();
 
+	// L10: TODO 8: Camera follow
+	// ...
+
+	// L10: TODO 5: Advance the animation clock -- logic, so it belongs in
+	// Update(), not Draw()
+	// ...
+
 	return true;
 }
 
@@ -65,15 +83,21 @@ void Player::Move() {
 	// Move left/right
 	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_A) == KEY_REPEAT) {
 		velocity.x = -speed;
+		// L10: TODO 6: Switch to the "move" animation
+		// ...
 	}
 	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_D) == KEY_REPEAT) {
 		velocity.x = speed;
+		// L10: TODO 6: Switch to the "move" animation
+		// ...
 	}
 }
 
 void Player::Jump() {
 	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_SPACE) == KEY_DOWN && isJumping == false) {
 		Engine::GetInstance().physics->ApplyLinearImpulseToCenter(pbody, 0.0f, -jumpForce, true);
+		// L10: TODO 6: Switch to the "jump" animation
+		// ...
 		isJumping = true;
 	}
 }
@@ -98,6 +122,8 @@ void Player::UpdatePosition() {
 bool Player::Draw() {
 	// L08: TODO 1: Once pbody exists, position is the body's CENTER -- offset
 	// by half the sprite size when drawing
+	// L10: TODO 7: Draw the current animation frame instead of the whole
+	// spritesheet -- rendering, so it belongs in Draw(), not Update()
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX() - texW / 2, (int)position.getY() - texH / 2);
 	return true;
 }
@@ -117,6 +143,8 @@ void Player::OnCollision(PhysBody* physA, PhysBody* physB) {
 		LOG("Collision PLATFORM");
 		// Reset the jump flag when touching the ground
 		isJumping = false;
+		// L10: TODO 6: Back to "idle" on landing
+		// ...
 		break;
 	case ColliderType::ITEM:
 		Engine::GetInstance().audio->PlayFx(pickCoinFxId);

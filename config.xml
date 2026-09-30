@@ -16,4 +16,10 @@
     <resizable value="false"/>
     <fullscreen_window value="false"/>
   </window>
+
+  <!-- L10: TODO 3: Add a <player> section: texture path, animations tsx
+       path, movement speed/jumpForce, frame width/height. Initial position
+       stays in code (it's map data, not player config; L15 loads it from
+       the map instead), and so do animation clip names (idle/move/jump --
+       they come from the TSX's own tile layout, not from config.xml). -->
 </config>

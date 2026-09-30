@@ -37,6 +37,11 @@ private:
 	void ApplyPhysics();
 	void UpdatePosition();
 
+	// L10: TODO 8: Horizontal-only camera follow -- writes camera.x
+	// directly, in float; the camera is SDL_FRect since L01 so there is no
+	// truncation to avoid and no need to route this through anything else
+	// ...
+
 public:
 
 	// Declare player parameters
@@ -55,4 +60,7 @@ public:
 
 private:
 	b2Vec2 velocity;
+
+	// L10: TODO 4: Player's animation clips, loaded from a TSX in Start()
+	// ...
 };
