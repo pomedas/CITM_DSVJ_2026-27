@@ -17,7 +17,7 @@ Player::~Player()
 
 bool Player::Awake()
 {
-	position = Vector2D(16, 0);
+	position = Vector2D(64, 64);
 	return true;
 }
 
