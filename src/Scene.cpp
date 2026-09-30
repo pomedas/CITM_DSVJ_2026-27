@@ -7,6 +7,7 @@
 #include "EntityManager.h"
 #include "Player.h"
 #include "Entity.h"
+#include "Item.h"
 #include "Map.h"
 
 Scene::Scene() : Module()
@@ -26,6 +27,9 @@ bool Scene::Awake()
 
 	// L04: TODO 3a: Instantiate the player through the entity manager
 	player = std::dynamic_pointer_cast<Player>(Engine::GetInstance().entityManager->CreateEntity(EntityType::PLAYER));
+
+	// L08: TODO 5: Create an item through the entity manager, to test picking it up
+	// ...
 
 	return ret;
 }

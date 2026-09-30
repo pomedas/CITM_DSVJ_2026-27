@@ -17,6 +17,7 @@ class Textures;
 class Audio;
 class Scene;
 class Map;
+class Physics;
 // L04: TODO 1: Add a forward declaration to the EntityManager class
 class EntityManager;
 
@@ -27,8 +28,12 @@ public:
 	// Public method to get the instance of the Singleton
 	static Engine& GetInstance();
 
-	//	
+	//
 	void AddModule(std::shared_ptr<Module> module);
+
+	// Delta time in seconds for the current frame, for modules -- e.g.
+	// Physics -- that need it outside DoUpdate()'s Update(dt) call.
+	float GetDt() const { return dt; }
 
 	// Called before render is available
 	bool Awake();
@@ -93,6 +98,7 @@ public:
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
 	std::shared_ptr<Map> map;
+	std::shared_ptr<Physics> physics;
 	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
 	std::shared_ptr<EntityManager> entityManager;
 
