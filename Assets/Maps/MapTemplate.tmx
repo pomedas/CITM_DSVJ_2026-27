@@ -54,9 +54,6 @@
   </wangsets>
  </tileset>
  <layer id="1" name="Map" width="64" height="24">
-  <properties>
-   <property name="Draw" type="bool" value="true"/>
-  </properties>
   <data>
    <tile gid="10"/>
    <tile gid="10"/>
