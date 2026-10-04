@@ -41,7 +41,7 @@ bool Scene::Start()
 
 	Engine::GetInstance().audio->PlayMusic("Assets/Audio/Music/level-iv-339695.wav");
 
-	// L06: TODO 7: Load the map through the map module
+	// L06: TODO 3: Load the map through the map module
 	// ...
 
 	return true;
