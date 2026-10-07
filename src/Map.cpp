@@ -91,9 +91,7 @@ bool Map::Load(std::string path, std::string fileName)
 		// image fails the whole load instead of silently drawing nothing later
 		ret = true;
 
-		mapData.tilesets.reserve(std::distance(mapNode.children("tileset").begin(), mapNode.children("tileset").end()));
-
-		for (pugi::xml_node tilesetNode : mapNode.children("tileset"))
+		for (pugi::xml_node tilesetNode = mapNode.child("tileset"); tilesetNode; tilesetNode = tilesetNode.next_sibling("tileset"))
 		{
 			TileSet tileSet;
 			tileSet.firstGid = tilesetNode.attribute("firstgid").as_int();
