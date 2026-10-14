@@ -35,9 +35,21 @@ bool Map::PostUpdate()
 	if (mapLoaded) {
 
 		// L07: TODO 5: Draw every tile in every layer
-		// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
-		// tile coordinates to world coordinates, then draw
-		// ...
+		for (const auto& layer : mapData.layers) {
+			for (int i = 0; i < mapData.width; i++) {
+				for (int j = 0; j < mapData.height; j++) {
+
+					// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
+					// tile coordinates to world coordinates, then draw
+					int gid = layer.Get(i, j);
+					const TileSet& tileSet = mapData.tilesets.front();
+					SDL_Rect tileRect = tileSet.GetRect(gid);
+					Vector2D mapCoord = MapToWorld(i, j);
+					Engine::GetInstance().render->DrawTexture(tileSet.texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+
+				}
+			}
+		}
 	}
 
 	return ret;
@@ -55,7 +67,7 @@ bool Map::CleanUp()
 	mapData.tilesets.clear();
 
 	// L07: TODO 2: Clear the layers
-	// ...
+	mapData.layers.clear();
 
 	return true;
 }
@@ -115,8 +127,23 @@ bool Map::Load(std::string path, std::string fileName)
 		}
 
 		// L07: TODO 3: Load every <layer>
-		// L07: TODO 4: Read one layer's attributes and its tile data
-		// ...
+		for (pugi::xml_node layerNode = mapNode.child("layer"); layerNode; layerNode = layerNode.next_sibling("layer"))
+		{
+			// L07: TODO 4: Read one layer's attributes and its tile data
+			MapLayer layer;
+			layer.id = layerNode.attribute("id").as_int();
+			layer.name = layerNode.attribute("name").as_string();
+			layer.width = layerNode.attribute("width").as_int();
+			layer.height = layerNode.attribute("height").as_int();
+
+			pugi::xml_node dataNode = layerNode.child("data");
+			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
+			{
+				int gid = tileNode.attribute("gid").as_int();
+				layer.tiles.push_back(gid);
+			}
+			mapData.layers.push_back(layer);
+		}
 
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
 		if (ret == true)
@@ -131,6 +158,13 @@ bool Map::Load(std::string path, std::string fileName)
 				LOG("tile width : %d tile height : %d", tileset.tileWidth, tileset.tileHeight);
 				LOG("spacing : %d margin : %d", tileset.spacing, tileset.margin);
 			}
+
+			// L07: TODO 3: LOG every layer too
+			LOG("Layers----");
+			for (const auto& layer : mapData.layers) {
+				LOG("id : %d name : %s", layer.id, layer.name.c_str());
+				LOG("Layer width : %d Layer height : %d", layer.width, layer.height);
+			}
 		}
 		else {
 			LOG("Error while parsing map file: %s", mapPathName.c_str());
@@ -140,5 +174,16 @@ bool Map::Load(std::string path, std::string fileName)
 	}
 
 	mapLoaded = ret;
+	return ret;
+}
+
+// L07: TODO 8: Translate tile coordinates (i, j) into world (pixel) coordinates
+Vector2D Map::MapToWorld(int x, int y) const
+{
+	Vector2D ret;
+
+	ret.setX((float)(x * mapData.tileWidth));
+	ret.setY((float)(y * mapData.tileHeight));
+
 	return ret;
 }
