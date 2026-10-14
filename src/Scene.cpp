@@ -42,7 +42,7 @@ bool Scene::Start()
 	Engine::GetInstance().audio->PlayMusic("Assets/Audio/Music/level-iv-339695.wav");
 
 	// L06: TODO 3: Load the map through the map module
-	// ...
+	Engine::GetInstance().map->Load("Assets/Maps/", "MapTemplate.tmx");
 
 	return true;
 }
