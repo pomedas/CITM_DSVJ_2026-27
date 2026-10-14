@@ -147,10 +147,7 @@ bool Map::Load(std::string path, std::string fileName)
 		}
 
 		// L08: TODO 3: Create colliders
-		// Temporary L08 placeholder: a few hand-placed platform colliders so
-		// there is something for the player to stand and jump on. L09 (Map
-		// collisions) replaces this with colliders derived from the map's
-		// own tile data instead of hardcoded pixel rectangles.
+		// For the moment create 3 colliders at fixed positions for the platforms in the map
 		Vector2D posC1 = Vector2D(224, 544);
 		int widthC1 = 256;
 		int heightC1 = 64;
@@ -168,6 +165,7 @@ bool Map::Load(std::string path, std::string fileName)
 		int heightC3 = 64;
 		PhysBody* c3 = Engine::GetInstance().physics->CreateRectangle((int)posC3.getX() + widthC3 / 2, (int)posC3.getY() + heightC3 / 2, widthC3, heightC3, bodyType::STATIC);
 		c3->ctype = ColliderType::PLATFORM;
+
 
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
 		if (ret == true)

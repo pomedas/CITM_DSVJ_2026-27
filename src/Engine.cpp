@@ -32,26 +32,17 @@ Engine::Engine() {
     audio = std::make_shared<Audio>();
     map = std::make_shared<Map>();
     scene = std::make_shared<Scene>();
+
     // L04: TODO 1: Register the EntityManager module
     entityManager = std::make_shared<EntityManager>();
     // L08: TODO 2: Add Physics Module
-    physics = std::make_shared<Physics>();
+	physics = std::make_shared<Physics>();
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
     // L07: registration order is also Update()/PostUpdate() (draw) order for
     // every module, so map is registered -- and therefore drawn -- before
     // scene and before entityManager.
-    // L08: physics->world is created in Physics::Awake(), not Start() --
-    // every module's Awake() runs before any module's Start(), so
-    // Map::Start() (which creates the map's static colliders) and
-    // EntityManager::Start() (which creates Player/Item, whose Start()
-    // creates their own bodies) see physics->world already alive no matter
-    // where physics sits in this list. That leaves physics free to be
-    // registered by draw order instead: it goes right before render, so its
-    // debug wireframes (drawn in PostUpdate(), toggled with F1) are drawn
-    // after the map's tiles and the entities' sprites instead of being
-    // immediately painted over by them.
     AddModule(std::static_pointer_cast<Module>(window));
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(textures));
@@ -59,11 +50,14 @@ Engine::Engine() {
 
     AddModule(std::static_pointer_cast<Module>(map));
     AddModule(std::static_pointer_cast<Module>(scene));
+
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
 
     // L08: TODO 2: Add Physics Module
-    AddModule(std::static_pointer_cast<Module>(physics));
+    // Register it right before render: registration order is draw order, and
+    // Physics::PostUpdate() draws the F1 debug wireframes
+	AddModule(std::static_pointer_cast<Module>(physics));
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));
