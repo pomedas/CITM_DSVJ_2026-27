@@ -28,7 +28,7 @@ public:
 	// Public method to get the instance of the Singleton
 	static Engine& GetInstance();
 
-	//
+	//	
 	void AddModule(std::shared_ptr<Module> module);
 
 	// Delta time in seconds for the current frame, for modules -- e.g.
