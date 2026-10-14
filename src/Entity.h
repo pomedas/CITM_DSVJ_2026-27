@@ -4,7 +4,8 @@
 #include <string>
 #include "Vector2D.h"
 
-class PhysBody;
+// L08 TODO 2:Add Physics Module 
+// Add forward declaration to avoid circular dependency
 
 enum class EntityType
 {
@@ -53,16 +54,12 @@ public:
 		return true;
 	}
 
-	// Called by Physics::BeginContact()/EndContact() when a shape on this
-	// entity's body starts/stops touching another shape. Default no-op;
-	// override to react.
-	virtual void OnCollision(PhysBody* physA, PhysBody* physB)
-	{
-	}
+	// L08 TODO 2:Add Physics Module 
+	// Add OnCollision()/OnCollisionEnd() when a shape on this
+	// entity's body starts/stops touching another shape. 
 
-	virtual void OnCollisionEnd(PhysBody* physA, PhysBody* physB)
-	{
-	}
+	//virtual void OnCollision(PhysBody* physA, PhysBody* physB) {}
+	//virtual void OnCollisionEnd(PhysBody* physA, PhysBody* physB) {}
 
 	void Enable()
 	{

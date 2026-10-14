@@ -17,9 +17,9 @@ class Textures;
 class Audio;
 class Scene;
 class Map;
-class Physics;
 // L04: TODO 1: Add a forward declaration to the EntityManager class
 class EntityManager;
+// L08: TODO 2: Add Physics Module
 
 class Engine
 {
@@ -98,9 +98,9 @@ public:
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
 	std::shared_ptr<Map> map;
-	std::shared_ptr<Physics> physics;
 	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
 	std::shared_ptr<EntityManager> entityManager;
+	// L08: TODO 2: Add Physics Module
 
 private:
 	// Delta time in seconds, computed once per frame in FinishUpdate().

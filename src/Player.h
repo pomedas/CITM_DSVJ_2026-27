@@ -23,9 +23,7 @@ public:
 
 	bool CleanUp();
 
-	// L08: TODO 2: React to collisions -- reset the jump flag on the ground,
-	// play a sound and destroy the item on pickup
-	// ...
+	// L08 TODO 6: Define OnCollision function for the player. 
 
 public:
 
@@ -33,6 +31,6 @@ public:
 	float speed = 5.0f;
 	SDL_Texture* texture;
 
-	// L08: TODO 1: Add a physics body to the player
+	// L08 TODO 5: Add physics to the player - declare a Physics body
 	// ...
 };
