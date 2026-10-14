@@ -35,6 +35,9 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Animation.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
     <ClCompile Include="src\Audio.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
@@ -88,6 +91,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Animation.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
     <ClInclude Include="src\Audio.h">
       <Filter>Source Files\Engine</Filter>
     </ClInclude>
