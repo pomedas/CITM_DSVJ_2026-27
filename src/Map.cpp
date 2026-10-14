@@ -36,17 +36,17 @@ bool Map::PostUpdate()
 	if (mapLoaded) {
 
 		// L07: TODO 5: Draw every tile in every layer
-		// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
-		// tile coordinates to world coordinates, then draw
-		for (const auto& mapLayer : mapData.layers) {
+		for (const auto& layer : mapData.layers) {
 			// Helper layers (e.g. the collision mask) are never meant to be
 			// seen -- skip anything Tiled itself marked not visible.
-			if (!mapLayer.visible) continue;
+			if (!layer.visible) continue;
 
 			for (int i = 0; i < mapData.width; i++) {
 				for (int j = 0; j < mapData.height; j++) {
 
-					unsigned int gid = mapLayer.Get(i, j);
+					// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
+					// tile coordinates to world coordinates, then draw
+					int gid = layer.Get(i, j);
 
 					// L09: TODO 7: Look up the right tileset for this gid
 					// instead of always using the first one; also the reason
@@ -56,8 +56,8 @@ bool Map::PostUpdate()
 
 					SDL_Rect tileRect = tileSet->GetRect(gid);
 					Vector2D mapCoord = MapToWorld(i, j);
-
 					Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+
 				}
 			}
 		}
@@ -114,9 +114,7 @@ bool Map::Load(std::string path, std::string fileName)
 		// image fails the whole load instead of silently drawing nothing later
 		ret = true;
 
-		mapData.tilesets.reserve(std::distance(mapNode.children("tileset").begin(), mapNode.children("tileset").end()));
-
-		for (pugi::xml_node tilesetNode : mapNode.children("tileset"))
+		for (pugi::xml_node tilesetNode = mapNode.child("tileset"); tilesetNode; tilesetNode = tilesetNode.next_sibling("tileset"))
 		{
 			TileSet tileSet;
 			tileSet.firstGid = tilesetNode.attribute("firstgid").as_int();
@@ -140,43 +138,41 @@ bool Map::Load(std::string path, std::string fileName)
 		}
 
 		// L07: TODO 3: Load every <layer>
-		// L07: TODO 4: Read one layer's attributes and its tile data
-		mapData.layers.reserve(std::distance(mapNode.children("layer").begin(), mapNode.children("layer").end()));
-
-		for (pugi::xml_node layerNode : mapNode.children("layer"))
+		for (pugi::xml_node layerNode = mapNode.child("layer"); layerNode; layerNode = layerNode.next_sibling("layer"))
 		{
-			MapLayer mapLayer;
-			mapLayer.id = layerNode.attribute("id").as_int();
-			mapLayer.name = layerNode.attribute("name").as_string();
-			mapLayer.width = layerNode.attribute("width").as_int();
-			mapLayer.height = layerNode.attribute("height").as_int();
-			mapLayer.visible = layerNode.attribute("visible").as_bool(true);
+			// L07: TODO 4: Read one layer's attributes and its tile data
+			MapLayer layer;
+			layer.id = layerNode.attribute("id").as_int();
+			layer.name = layerNode.attribute("name").as_string();
+			layer.width = layerNode.attribute("width").as_int();
+			layer.height = layerNode.attribute("height").as_int();
+			layer.visible = layerNode.attribute("visible").as_bool(true);
 
 			// L09: TODO 5: Load this layer's custom properties
-			LoadProperties(layerNode, mapLayer.properties);
+			LoadProperties(layerNode, layer.properties);
 
-			mapLayer.tiles.reserve((size_t)mapLayer.width * mapLayer.height);
-			for (pugi::xml_node tileNode : layerNode.child("data").children("tile"))
+			pugi::xml_node dataNode = layerNode.child("data");
+			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
 			{
-				mapLayer.tiles.push_back(tileNode.attribute("gid").as_int());
+				int gid = tileNode.attribute("gid").as_int();
+				layer.tiles.push_back(gid);
 			}
-
-			mapData.layers.push_back(mapLayer);
+			mapData.layers.push_back(layer);
 		}
 
 		// L09: TODO 8: Build static colliders from the map's own tile data --
 		// replaces L08's hand-placed pixel rectangles. Any layer whose
 		// "Collision" property is true contributes one rectangle per
 		// non-empty tile (the invisible "Collisions" layer in the TMX).
-		for (const auto& mapLayer : mapData.layers)
+		for (const auto& layer : mapData.layers)
 		{
-			const Properties::Property* collision = mapLayer.properties.GetProperty("Collision");
+			const Properties::Property* collision = layer.properties.GetProperty("Collision");
 			if (collision == nullptr || !collision->AsBool()) continue;
 
 			for (int i = 0; i < mapData.width; i++) {
 				for (int j = 0; j < mapData.height; j++) {
 
-					unsigned int gid = mapLayer.Get(i, j);
+					int gid = layer.Get(i, j);
 					if (gid == 0) continue;
 
 					Vector2D mapCoord = MapToWorld(i, j);
