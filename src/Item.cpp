@@ -18,16 +18,16 @@ bool Item::Awake() {
 bool Item::Start() {
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/goldCoin.png");
 
-	// L08 TODO 4: Add a physics to an item - initialize the physics body
+	// L08: TODO 4: Add a physics to an item - initialize the physics body
 
-	// L08 TODO 7: Assign collider type
+	// L08: TODO 7: Assign collider type
 
 	return true;
 }
 
 bool Item::Update(float dt)
 {
-	// L08 TODO 4: Add a physics to an item - update the position of the object from the physics.  
+	// L08: TODO 4: Add a physics to an item - update the position of the object from the physics.
 	// ...
 
 	return true;
@@ -35,7 +35,7 @@ bool Item::Update(float dt)
 
 bool Item::Draw()
 {
-	// L08 TODO 4: Add a physics to an item - update the position of the object from the physics.  
+	// L08: TODO 4: Add a physics to an item - update the position of the object from the physics.
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX(), (int)position.getY());
 	return true;
 }

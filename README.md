@@ -14,30 +14,31 @@ The `Physics` module (`src/Physics.h`/`.cpp`, Box2D 3.x) is handed to you
 lecture is attaching physics bodies to `Player` and the new `Item` entity, and
 reacting to the collisions Physics reports back to them.
 
-Three hand-placed platform colliders already exist in `Map::Load()` (a
-placeholder — L09 replaces them with colliders derived from the map's own
-tile data), and `Scene::Awake()` is ready to create an `Item` once you tell it
-how. Right now the player still moves with the direct WASD position edit from
-L04 and ignores gravity entirely — that's what you're about to replace.
+You also add the module to the engine, create three hand-placed platform
+colliders in `Map::Load()` (a placeholder — L09 replaces them with colliders
+derived from the map's own tile data) and create an `Item` in `Scene::Awake()`.
+Right now the player still moves with the direct WASD position edit from L04
+and ignores gravity entirely — that's what you're about to replace.
 
 ## What each TODO does
 
 | Marker | File | What you add |
 |---|---|---|
-| `L08: TODO 1` | `src/Player.h`/`.cpp` | Give the player a `pbody` — a `CreateCapsule()` body, fixed rotation so it doesn't roll — and replace the direct WASD position edit in `Update()`/`Draw()` with physics-driven movement |
-| `L08: TODO 2` | `src/Player.h`/`.cpp` | Set `pbody->listener = this` so `Physics` can call back, then implement `OnCollision()`/`OnCollisionEnd()`: reset the jump flag on the ground, play a sound and destroy the item on pickup |
-| `L08: TODO 3` | `src/Player.cpp`, `src/Item.cpp` | Assign `pbody->ctype` on both bodies — without it, `OnCollision()`'s `switch` on `physB->ctype` can't tell what it hit |
-| `L08: TODO 4` | `src/Item.h`/`.cpp` | Give the item its own `CreateCircle()` body, and sync `position` from it every `Update()` |
-| `L08: TODO 5` | `src/Scene.cpp` | Create an `Item` through the entity manager and place it near `(200, 672)`, over one of the platforms |
+| `L08: TODO 1` | `vcpkg.json` | Add `box2d` to the dependencies |
+| `L08: TODO 2` | `Engine.h`/`.cpp`, `Entity.h`, project file | Add `Physics.h`/`.cpp` to the project, then add the `Physics` module to the engine (forward declaration, `shared_ptr` member, instantiate and register it) and declare `OnCollision()`/`OnCollisionEnd()` on `Entity` |
+| `L08: TODO 3` | `src/Map.cpp` | Create three hand-placed static platform colliders with `CreateRectangle()` (`ctype = PLATFORM`) |
+| `L08: TODO 4` | `src/Item.h`/`.cpp`, `src/Scene.cpp` | Give the item its own `CreateCircle()` body and sync `position` from it every `Update()`; create an `Item` through the entity manager and place it near `(200, 672)` |
+| `L08: TODO 5` | `src/Player.h`/`.cpp` | Give the player a `pbody` — a `CreateCapsule()` body with fixed rotation so it doesn't roll — and replace the direct WASD position edit in `Update()`/`Draw()` with physics-driven movement |
+| `L08: TODO 6` | `src/Player.h`/`.cpp` | Set `pbody->listener = this` so `Physics` can call back, then implement `OnCollision()`/`OnCollisionEnd()`: reset the jump flag on the ground, play a sound and destroy the item on pickup |
+| `L08: TODO 7` | `src/Player.cpp`, `src/Item.cpp` | Assign `pbody->ctype` on both bodies — without it, `OnCollision()`'s `switch` on `physB->ctype` can't tell what it hit |
 
-`physics` itself is already instantiated and registered in `Engine`'s
-constructor, right before `render` — that wiring is *not* a TODO.
-`physics->world` is created in `Physics::Awake()`, which runs before any
-module's `Start()` regardless of registration order, so `Map::Start()`'s
-platform colliders and `Player`/`Item`'s bodies always find it ready. That's
-also why `physics` is registered *late*: its debug draw (`Physics::PostUpdate()`,
-toggled with **F1**) needs to happen after the map and the entities draw, or
-the wireframes get painted over the instant those draw on top of them.
+Where you register the `Physics` module matters: registration order is draw
+order, and `Physics::PostUpdate()` draws the debug wireframes (toggled with
+**F1**). Register it right before `render` so they are drawn after the map
+and the entities instead of being painted over. `physics->world` is created
+in `Physics::Awake()`, which runs before any module's `Start()` regardless of
+registration order, so `Map::Start()`'s platform colliders and
+`Player`/`Item`'s bodies always find it ready.
 
 ## Why the frame's `dt` gets a fixed-timestep accumulator
 
@@ -98,8 +99,8 @@ ground and wall sensors, and this is the tool for building them.
 ## Build
 
 Open `PlatformGame.sln`, select **x64**, build and run. Before the TODOs, the
-player moves with WASD exactly like L07 and ignores the platforms and the
-coin entirely (nothing draws yet — the item TODOs aren't done). After TODO 1
+player moves with WASD exactly like L07 and there are no platforms and no
+coin (nothing draws yet — the item TODOs aren't done). After TODO 5
 the player should fall, land on the platforms, and stop rolling. Press **F1**
 to toggle the Box2D debug wireframes while you work.
 
@@ -107,14 +108,13 @@ to toggle the Box2D debug wireframes while you work.
 
 Start at `Physics::PreUpdate()` for the accumulator, then `CreateCapsule()`
 and `AddSensorShape()` in `src/Physics.cpp` — you won't need to change either,
-but you will call them. Then look at `Map::Load()`'s platform colliders for a
-worked example of `CreateRectangle()` before writing your own
-`CreateCapsule()`/`CreateCircle()` calls.
+but you will call them. Then read `CreateRectangle()`
+before writing your own `CreateCapsule()`/`CreateCircle()` calls.
 
 ## Homework
 
 - Compare this branch against `L08_Physics_Solution` once you're done — the
-  diff should be nothing but the five TODO bodies.
+  diff should be nothing but the TODO bodies.
 - Set a breakpoint anywhere inside `Physics::PreUpdate()`, let the game sit
   paused for a few seconds, then resume. Confirm nothing lurches.
 - The `MapTemplate.tmx` platforms are hardcoded pixel rectangles in
