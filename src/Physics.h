@@ -118,9 +118,9 @@ private:
 	static void DrawSolidPolygonCb(b2Transform xf, const b2Vec2* verts, int count, float radius, b2HexColor color, void* ctx);
 	static void DrawCircleCb(b2Vec2 center, float radius, b2HexColor color, void* ctx);
 	static void DrawSolidCircleCb(b2Transform xf, float radius, b2HexColor color, void* ctx);
+	static void DrawSolidCapsuleCb(b2Vec2 a, b2Vec2 b, float r, b2HexColor c, void* ctx);
 
 	// --- Defensive no-op stubs (so Box2D never calls a null fn ptr)
-	static void DrawSolidCapsuleStub(b2Vec2 a, b2Vec2 b, float r, b2HexColor c, void* ctx);
 	static void DrawPointStub(b2Vec2 p, float size, b2HexColor c, void* ctx);
 	static void DrawStringStub(b2Vec2 p, const char* s, b2HexColor c, void* ctx);
 	static void DrawTransformStub(b2Transform xf, void* ctx);

@@ -24,6 +24,7 @@ bool Player::Start()
 {
 	// L04: TODO 2: Load the player texture
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
+	Engine::GetInstance().textures->GetSize(texture, texW, texH);
 
 	// L08: TODO 5: Add physics to the player - create the physics body: a CAPSULE (CreateCapsule) with fixed rotation, so the player does not roll
 

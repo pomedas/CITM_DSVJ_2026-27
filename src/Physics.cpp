@@ -275,7 +275,7 @@ bool Physics::PostUpdate()
 			dd.DrawSolidCircleFcn = &Physics::DrawSolidCircleCb;
 
 			// Defensive stubs (prevent nullptr calls inside Box2D)
-			dd.DrawSolidCapsuleFcn = &Physics::DrawSolidCapsuleStub;
+			dd.DrawSolidCapsuleFcn = &Physics::DrawSolidCapsuleCb;
 			dd.DrawPointFcn = &Physics::DrawPointStub;
 			dd.DrawStringFcn = &Physics::DrawStringStub;
 			dd.DrawTransformFcn = &Physics::DrawTransformStub;
@@ -536,8 +536,33 @@ void Physics::DrawSolidCircleCb(b2Transform xf, float radius, b2HexColor color, 
 	DrawCircleCb(xf.p, radius, color, ctx);
 }
 
+void Physics::DrawSolidCapsuleCb(b2Vec2 p1, b2Vec2 p2, float radius,
+	b2HexColor /*color*/, void* /*ctx*/)
+{
+	auto& r = *Engine::GetInstance().render;
+	const float scale = Engine::GetInstance().window->GetScale();
+	const int rad = (int)(METERS_TO_PIXELS(radius) * scale);
+
+	// the two end caps
+	r.DrawCircle(METERS_TO_PIXELS(p1.x), METERS_TO_PIXELS(p1.y), rad, 255, 255, 255);
+	r.DrawCircle(METERS_TO_PIXELS(p2.x), METERS_TO_PIXELS(p2.y), rad, 255, 255, 255);
+
+	// the straight sides: offset the segment by the radius, perpendicular to it
+	b2Vec2 d = { p2.x - p1.x, p2.y - p1.y };
+	const float len = sqrtf(d.x * d.x + d.y * d.y);
+	if (len > 0.0f)
+	{
+		const float nx = -d.y / len * radius;   // perpendicular, scaled to the radius
+		const float ny = d.x / len * radius;
+
+		r.DrawLine(METERS_TO_PIXELS(p1.x + nx), METERS_TO_PIXELS(p1.y + ny),
+			METERS_TO_PIXELS(p2.x + nx), METERS_TO_PIXELS(p2.y + ny), 255, 255, 255);
+		r.DrawLine(METERS_TO_PIXELS(p1.x - nx), METERS_TO_PIXELS(p1.y - ny),
+			METERS_TO_PIXELS(p2.x - nx), METERS_TO_PIXELS(p2.y - ny), 255, 255, 255);
+	}
+}
+
 // ---- No-op stubs to avoid null calls -----------------------
-void Physics::DrawSolidCapsuleStub(b2Vec2, b2Vec2, float, b2HexColor, void*) {}
 void Physics::DrawPointStub(b2Vec2, float, b2HexColor, void*) {}
 void Physics::DrawStringStub(b2Vec2, const char*, b2HexColor, void*) {}
 void Physics::DrawTransformStub(b2Transform, void*) {}
