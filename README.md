@@ -3,7 +3,7 @@
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
 The completed version of `L08_Physics`. Builds on `L07_TileMap_Drawing_Solution`.
-All five TODOs are filled in — this is what your engine should look like at the
+All seven TODOs are filled in — this is what your engine should look like at the
 end of the lecture.
 
 ## The idea
@@ -24,18 +24,17 @@ data.
 
 | Marker | File | Answer |
 |---|---|---|
-| `L08: TODO 1` | `src/Player.h`/`.cpp` | `pbody` is a `CreateCapsule()` body, not a circle — fixed rotation, so the player doesn't roll; `Draw()` offsets by half the sprite size since `position` is now the body's center |
-| `L08: TODO 2` | `src/Player.h`/`.cpp` | `pbody->listener = this`, plus `OnCollision()`/`OnCollisionEnd()`: reset the jump flag on `PLATFORM`, play a sound and destroy the item on `ITEM` |
-| `L08: TODO 3` | `src/Player.cpp`, `src/Item.cpp` | `pbody->ctype` — without this, `OnCollision()`'s `switch` on `physB->ctype` can't tell what it hit |
-| `L08: TODO 4` | `src/Item.h`/`.cpp` | The item's own `CreateCircle()` body, and syncing `position` from it every `Update()` |
-| `L08: TODO 5` | `src/Scene.cpp` | Creates an `Item` through the entity manager and places it at `(200, 672)` |
+| `L08: TODO 1` | `vcpkg.json` | `box2d` is a dependency |
+| `L08: TODO 2` | `Engine.h`/`.cpp`, `Entity.h`, project file | `Physics.h`/`.cpp` are in the project, and the `Physics` module is declared, instantiated and registered in `Engine`; `Entity` declares `OnCollision()`/`OnCollisionEnd()` |
+| `L08: TODO 3` | `src/Map.cpp` | Three hand-placed static platform colliders via `CreateRectangle()` (`ctype = PLATFORM`) |
+| `L08: TODO 4` | `src/Item.h`/`.cpp`, `src/Scene.cpp` | The item's own `CreateCircle()` body, syncing `position` from it every `Update()`; an `Item` created through the entity manager at `(200, 672)` |
+| `L08: TODO 5` | `src/Player.h`/`.cpp` | `pbody` is a `CreateCapsule()` body, not a circle — fixed rotation, so the player doesn't roll; `Draw()` offsets by half the sprite size since `position` is now the body's center |
+| `L08: TODO 6` | `src/Player.h`/`.cpp` | `pbody->listener = this`, plus `OnCollision()`/`OnCollisionEnd()`: reset the jump flag on `PLATFORM`, play a sound and destroy the item on `ITEM` |
+| `L08: TODO 7` | `src/Player.cpp`, `src/Item.cpp` | `pbody->ctype` — without this, `OnCollision()`'s `switch` on `physB->ctype` can't tell what it hit |
 
-`physics` itself is instantiated and registered in `Engine`'s constructor like
-any other module, before `map` and `scene` — but that wiring isn't a TODO
-either. Since `Map::Load()`'s platform colliders and `Player`/`Item`'s bodies
-all need `physics->world` to already exist, treating the registration as an
-exercise would mean the given, non-TODO map-collider code crashes on a fresh
-checkout — infrastructure needs its wiring to already be live.
+`physics` is registered right before `render` (see below): registration order
+is draw order, and the debug wireframes must be drawn after the map and the
+entities.
 
 ## Why the frame's `dt` gets a fixed-timestep accumulator
 
@@ -150,7 +149,7 @@ gameplay.
 ## Homework
 
 - Compare this branch against `L08_Physics` — the diff should be nothing but
-  the five TODO bodies.
+  the TODO bodies.
 - Set a breakpoint anywhere inside `Physics::PreUpdate()`, let the game sit
   paused for a few seconds, then resume. Confirm nothing lurches.
 - The `MapTemplate.tmx` platforms are hardcoded pixel rectangles in

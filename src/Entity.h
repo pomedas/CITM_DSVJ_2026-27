@@ -4,6 +4,8 @@
 #include <string>
 #include "Vector2D.h"
 
+// L08: TODO 2: Add Physics Module
+// Add forward declaration to avoid circular dependency
 class PhysBody;
 
 enum class EntityType
@@ -53,6 +55,7 @@ public:
 		return true;
 	}
 
+	// L08: TODO 2: Add Physics Module
 	// Called by Physics::BeginContact()/EndContact() when a shape on this
 	// entity's body starts/stops touching another shape. Default no-op;
 	// override to react.

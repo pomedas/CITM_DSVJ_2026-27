@@ -151,6 +151,7 @@ bool Map::Load(std::string path, std::string fileName)
 			mapData.layers.push_back(mapLayer);
 		}
 
+		// L08: TODO 3: Create colliders
 		// Temporary L08 placeholder: a few hand-placed platform colliders so
 		// there is something for the player to stand and jump on. L09 (Map
 		// collisions) replaces this with colliders derived from the map's
