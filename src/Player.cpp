@@ -19,8 +19,8 @@ bool Player::Awake()
 {
 	// L10: initial position stays in code (see TODO 3) -- it's map data,
 	// not player config, and L15 loads it from the map instead. Away from
-	// the left wall (L09's Collisions layer): spawning at the old (64, 64)
-	// sat the capsule right against it.
+	// the left wall (L09's Collisions layer).
+	// L04: TODO 2: Initialize the player's position
 	position = Vector2D(300, 300);
 	return true;
 }
@@ -31,22 +31,23 @@ bool Player::Start()
 	// instead of hardcoding them. GetSize() is not the fix for texW/texH --
 	// the real texture (a spritesheet) would return the whole sheet's size,
 	// not one frame's.
+	// L04: TODO 2: Load the player texture
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
 	Engine::GetInstance().textures->GetSize(texture, texW, texH);
 
 	// L10: TODO 4: Load this entity's animations from a TSX
 	// ...
 
-	// L08: TODO 1: Create the player's physics body -- a capsule, not a
+	// L08: TODO 5: Create the player's physics body -- a capsule, not a
 	// circle, with fixed rotation so it doesn't roll. width == height for
 	// this sprite, so the capsule geometrically degenerates to a circle;
 	// fixedRotation is where the actual improvement over L07 comes from.
 	pbody = Engine::GetInstance().physics->CreateCapsule((int)position.getX(), (int)position.getY(), texW, texH, bodyType::DYNAMIC);
 
-	// L08: TODO 2: so Physics::BeginContact()/EndContact() can call back here
+	// L08: TODO 6: so Physics::BeginContact()/EndContact() can call back here
 	pbody->listener = this;
 
-	// L08: TODO 3: Assign collider type
+	// L08: TODO 7: Assign collider type
 	pbody->ctype = ColliderType::PLAYER;
 
 	// Initialize audio effect
@@ -57,6 +58,7 @@ bool Player::Start()
 
 bool Player::Update(float dt)
 {
+	// L08: TODO 5: Update the player's position using physics
 	GetPhysicsValues();
 	Move();
 	Jump();
@@ -120,7 +122,7 @@ void Player::UpdatePosition() {
 }
 
 bool Player::Draw() {
-	// L08: TODO 1: Once pbody exists, position is the body's CENTER -- offset
+	// L08: TODO 5: Once pbody exists, position is the body's CENTER -- offset
 	// by half the sprite size when drawing
 	// L10: TODO 7: Draw the current animation frame instead of the whole
 	// spritesheet -- rendering, so it belongs in Draw(), not Update()
@@ -135,7 +137,7 @@ bool Player::CleanUp()
 	return true;
 }
 
-// L08: TODO 2: React to collisions
+// L08: TODO 6: Define OnCollision function for the player.
 void Player::OnCollision(PhysBody* physA, PhysBody* physB) {
 	switch (physB->ctype)
 	{

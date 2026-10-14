@@ -33,7 +33,7 @@ bool Scene::Awake()
 	// there's a window between construction and Awake() to set this first
 	// ...
 
-	// L08: TODO 5: Create an item through the entity manager, to test picking it up
+	// L08: TODO 4: Create an item through the entity manager, to test picking it up
 	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
 	item->position = Vector2D(200, 672);
 
