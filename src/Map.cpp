@@ -37,12 +37,19 @@ bool Map::PostUpdate()
 
 		// L07: TODO 5: Draw every tile in every layer
 		for (const auto& layer : mapData.layers) {
+			// Helper layers (e.g. the collision mask) are never meant to be
+			// seen -- skip anything Tiled itself marked not visible.
+			if (!layer.visible) continue;
+
 			for (int i = 0; i < mapData.width; i++) {
 				for (int j = 0; j < mapData.height; j++) {
 
 					// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
 					// tile coordinates to world coordinates, then draw
 					int gid = layer.Get(i, j);
+
+					// L09: TODO 7: This always uses the first tileset -- once
+					// GetTilesetFromTileId() exists, look the right one up per gid instead
 					const TileSet& tileSet = mapData.tilesets.front();
 					SDL_Rect tileRect = tileSet.GetRect(gid);
 					Vector2D mapCoord = MapToWorld(i, j);
@@ -136,6 +143,10 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.name = layerNode.attribute("name").as_string();
 			layer.width = layerNode.attribute("width").as_int();
 			layer.height = layerNode.attribute("height").as_int();
+			layer.visible = layerNode.attribute("visible").as_bool(true);
+
+			// L09: TODO 5: Load this layer's custom properties
+			// ...
 
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
@@ -147,7 +158,13 @@ bool Map::Load(std::string path, std::string fileName)
 		}
 
 		// L08: TODO 3: Create colliders
-		// For the moment create 3 colliders at fixed positions for the platforms in the map
+		// Temporary L08 placeholder: a few hand-placed platform colliders so
+		// there is something for the player to stand and jump on.
+		// L09: TODO 8: Replace this whole block with a loop that builds one
+		// rectangle collider per non-empty tile, for any layer whose
+		// "Collision" custom property is true (see the invisible
+		// "Collisions" layer in MapTemplate.tmx) -- colliders derived from
+		// the map's own tile data instead of hardcoded pixel rectangles.
 		Vector2D posC1 = Vector2D(224, 544);
 		int widthC1 = 256;
 		int heightC1 = 64;
@@ -209,3 +226,4 @@ Vector2D Map::MapToWorld(int x, int y) const
 
 	return ret;
 }
+
