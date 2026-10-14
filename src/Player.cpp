@@ -4,6 +4,8 @@
 #include "Input.h"
 #include "Render.h"
 #include "Log.h"
+#include "Physics.h"
+#include "Audio.h"
 
 Player::Player() : Entity(EntityType::PLAYER)
 {
@@ -26,11 +28,17 @@ bool Player::Start()
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
 	Engine::GetInstance().textures->GetSize(texture, texW, texH);
 
+	// Initialize audio effect
+	pickCoinFxId = Engine::GetInstance().audio->LoadFx("Assets/Audio/Fx/coin-collision-sound-342335.wav");
+
 	// L08: TODO 5: Add physics to the player - create the physics body: a CAPSULE (CreateCapsule) with fixed rotation, so the player does not roll
+	pbody = Engine::GetInstance().physics->CreateCircle((int)position.getX() + texW / 2, (int)position.getY() + texH / 2, texW / 2, bodyType::DYNAMIC);
 
 	// L08: TODO 6: Assign player class (using "this") to the listener of the pbody. This makes the Physics module to call the OnCollision method
+	pbody->listener = this;
 
 	// L08: TODO 7: Assign collider type
+	pbody->ctype = ColliderType::PLAYER;
 
 	return true;
 }
@@ -39,20 +47,24 @@ bool Player::Update(float dt)
 {
 	// L08: TODO 5: Add physics to the player - updated player position using physics
 
-	// L04: TODO 5: Move the player with WASD, independent of framerate
-	float speed = 200.0f;
+	velocity = Engine::GetInstance().physics->GetLinearVelocity(pbody);
+	velocity = { 0, velocity.y }; // Reset horizontal velocity by default, this way the player stops when no key is pressed
 
-	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_W) == KEY_REPEAT)
-		position.setY(position.getY() - speed * dt);
+	// Move left/right
+	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_A) == KEY_REPEAT) {
+		velocity.x = -speed;
+	}
+	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_D) == KEY_REPEAT) {
+		velocity.x = speed;
+	}
 
-	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_S) == KEY_REPEAT)
-		position.setY(position.getY() + speed * dt);
+	// Apply velocity via helper
+	Engine::GetInstance().physics->SetLinearVelocity(pbody, velocity);
 
-	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_A) == KEY_REPEAT)
-		position.setX(position.getX() - speed * dt);
-
-	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_D) == KEY_REPEAT)
-		position.setX(position.getX() + speed * dt);
+	int x, y;
+	pbody->GetPosition(x, y);
+	position.setX((float)x);
+	position.setY((float)y);
 
 	return true;
 }
@@ -62,7 +74,8 @@ bool Player::Draw()
 	// L08: TODO 5: Add physics to the player - updated player position using physics
 
 	// L04: TODO 4: Render the player texture at its current position
-	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX(), (int)position.getY());
+	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX() - texW / 2, (int)position.getY() - texH / 2);
+
 	return true;
 }
 
@@ -74,3 +87,24 @@ bool Player::CleanUp()
 }
 
 // L08: TODO 6: Define OnCollision function for the player.
+void Player::OnCollision(PhysBody* physA, PhysBody* physB)
+{
+	// Handle collision with other physics bodies
+	// For example, if the player collides with an item, you can implement logic here
+	switch (physB->ctype)
+	{
+	case ColliderType::PLATFORM:
+		LOG("Collision PLATFORM");
+		break;
+	case ColliderType::ITEM:
+		Engine::GetInstance().audio->PlayFx(pickCoinFxId);
+		//physB->listener->Destroy();
+		LOG("Collision ITEM");
+		break;
+	case ColliderType::UNKNOWN:
+		LOG("Collision UNKNOWN");
+		break;
+	default:
+		break;
+	}
+}

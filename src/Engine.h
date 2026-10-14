@@ -20,6 +20,7 @@ class Map;
 // L04: TODO 1: Add a forward declaration to the EntityManager class
 class EntityManager;
 // L08: TODO 2: Add Physics Module
+class Physics;
 
 class Engine
 {
@@ -101,6 +102,7 @@ public:
 	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
 	std::shared_ptr<EntityManager> entityManager;
 	// L08: TODO 2: Add Physics Module
+	std::shared_ptr<Physics> physics;
 
 private:
 	// Delta time in seconds, computed once per frame in FinishUpdate().

@@ -2,6 +2,7 @@
 
 #include "Entity.h"
 #include <SDL3/SDL.h>
+#include <box2d/box2d.h>
 
 struct SDL_Texture;
 
@@ -24,6 +25,7 @@ public:
 	bool CleanUp();
 
 	// L08: TODO 6: Define OnCollision function for the player.
+	void OnCollision(PhysBody* physA, PhysBody* physB);
 
 public:
 
@@ -33,5 +35,10 @@ public:
 	int texW, texH;
 
 	// L08: TODO 5: Add physics to the player - declare a Physics body
-	// ...
+	PhysBody* pbody;
+
+private:
+	b2Vec2 velocity;
+	// Audio fx
+	int pickCoinFxId;
 };

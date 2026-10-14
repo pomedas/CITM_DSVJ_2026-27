@@ -13,7 +13,7 @@
 #include "Map.h"
 #include "EntityManager.h"
 // L08: TODO 2: Add Physics Module
-// ..
+#include "Physics.h"
 
 
 // Constructor
@@ -36,7 +36,7 @@ Engine::Engine() {
     // L04: TODO 1: Register the EntityManager module
     entityManager = std::make_shared<EntityManager>();
     // L08: TODO 2: Add Physics Module
-    // ..
+	physics = std::make_shared<Physics>();
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
@@ -57,7 +57,7 @@ Engine::Engine() {
     // L08: TODO 2: Add Physics Module
     // Register it right before render: registration order is draw order, and
     // Physics::PostUpdate() draws the F1 debug wireframes
-    // ..
+	AddModule(std::static_pointer_cast<Module>(physics));
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));

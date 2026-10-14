@@ -29,15 +29,15 @@ bool Scene::Awake()
 	player = std::dynamic_pointer_cast<Player>(Engine::GetInstance().entityManager->CreateEntity(EntityType::PLAYER));
 
 	// L08: TODO 4: Create an item through the entity manager
-	// ...
-
+	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
+	item->position = Vector2D(150, 200);
 	return ret;
 }
 
 // Called before the first frame
 bool Scene::Start()
 {
-	Engine::GetInstance().audio->PlayMusic("Assets/Audio/Music/level-iv-339695.wav");
+	//Engine::GetInstance().audio->PlayMusic("Assets/Audio/Music/level-iv-339695.wav");
 
 	// L06: TODO 7: Load the map through the map module
 	Engine::GetInstance().map->Load("Assets/Maps/", "MapTemplate.tmx");
