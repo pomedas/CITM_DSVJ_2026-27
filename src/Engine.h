@@ -19,6 +19,7 @@ class Scene;
 class Map;
 // L04: TODO 1: Add a forward declaration to the EntityManager class
 class EntityManager;
+// L08: TODO 2: Add Physics Module
 
 class Engine
 {
@@ -29,6 +30,10 @@ public:
 
 	//	
 	void AddModule(std::shared_ptr<Module> module);
+
+	// Delta time in seconds for the current frame, for modules -- e.g.
+	// Physics -- that need it outside DoUpdate()'s Update(dt) call.
+	float GetDt() const { return dt; }
 
 	// Called before render is available
 	bool Awake();
@@ -95,6 +100,7 @@ public:
 	std::shared_ptr<Map> map;
 	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
 	std::shared_ptr<EntityManager> entityManager;
+	// L08: TODO 2: Add Physics Module
 
 private:
 	// Delta time in seconds, computed once per frame in FinishUpdate().

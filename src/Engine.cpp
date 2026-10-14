@@ -12,6 +12,8 @@
 #include "Scene.h"
 #include "Map.h"
 #include "EntityManager.h"
+// L08: TODO 2: Add Physics Module
+// ..
 
 
 // Constructor
@@ -33,6 +35,8 @@ Engine::Engine() {
 
     // L04: TODO 1: Register the EntityManager module
     entityManager = std::make_shared<EntityManager>();
+    // L08: TODO 2: Add Physics Module
+    // ..
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
@@ -43,11 +47,17 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(input));
     AddModule(std::static_pointer_cast<Module>(textures));
     AddModule(std::static_pointer_cast<Module>(audio));
+
     AddModule(std::static_pointer_cast<Module>(map));
     AddModule(std::static_pointer_cast<Module>(scene));
 
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
+
+    // L08: TODO 2: Add Physics Module
+    // Register it right before render: registration order is draw order, and
+    // Physics::PostUpdate() draws the F1 debug wireframes
+    // ..
 
     // Render last
     AddModule(std::static_pointer_cast<Module>(render));

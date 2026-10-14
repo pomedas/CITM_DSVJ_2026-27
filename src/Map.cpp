@@ -145,6 +145,9 @@ bool Map::Load(std::string path, std::string fileName)
 			mapData.layers.push_back(layer);
 		}
 
+		// L08: TODO 3: Create colliders
+		// For the moment create 3 colliders at fixed positions for the platforms in the map
+
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
 		if (ret == true)
 		{
