@@ -23,7 +23,7 @@ bool Item::Start() {
 	// L08: TODO 4: Create the item's physics body
 	pbody = Engine::GetInstance().physics->CreateCircle((int)position.getX() + texW / 2, (int)position.getY() + texH / 2, texW / 2, bodyType::DYNAMIC);
 
-	// L08: TODO 3: Assign collider type
+	// L08: TODO 7: Assign collider type
 	pbody->ctype = ColliderType::ITEM;
 
 	// So Physics::BeginContact()/EndContact() can call back here

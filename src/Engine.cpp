@@ -11,8 +11,9 @@
 #include "Audio.h"
 #include "Scene.h"
 #include "Map.h"
-#include "Physics.h"
 #include "EntityManager.h"
+// L08: TODO 2: Add Physics Module
+#include "Physics.h"
 
 
 // Constructor
@@ -29,12 +30,12 @@ Engine::Engine() {
     render = std::make_shared<Render>();
     textures = std::make_shared<Textures>();
     audio = std::make_shared<Audio>();
-    physics = std::make_shared<Physics>();
     map = std::make_shared<Map>();
     scene = std::make_shared<Scene>();
-
     // L04: TODO 1: Register the EntityManager module
     entityManager = std::make_shared<EntityManager>();
+    // L08: TODO 2: Add Physics Module
+    physics = std::make_shared<Physics>();
 
     // Ordered for awake / Start / Update
     // Reverse order of CleanUp
@@ -58,10 +59,10 @@ Engine::Engine() {
 
     AddModule(std::static_pointer_cast<Module>(map));
     AddModule(std::static_pointer_cast<Module>(scene));
-
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
 
+    // L08: TODO 2: Add Physics Module
     AddModule(std::static_pointer_cast<Module>(physics));
 
     // Render last
