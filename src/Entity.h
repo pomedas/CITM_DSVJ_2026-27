@@ -4,9 +4,13 @@
 #include <string>
 #include "Vector2D.h"
 
+// L08: TODO 2: Add Physics Module
+// Add forward declaration to avoid circular dependency
+
 enum class EntityType
 {
 	PLAYER,
+	ITEM,
 	UNKNOWN
 };
 
@@ -49,6 +53,13 @@ public:
 	{
 		return true;
 	}
+
+	// L08: TODO 2: Add Physics Module
+	// Add OnCollision()/OnCollisionEnd() when a shape on this
+	// entity's body starts/stops touching another shape. 
+
+	//virtual void OnCollision(PhysBody* physA, PhysBody* physB) {}
+	//virtual void OnCollisionEnd(PhysBody* physA, PhysBody* physB) {}
 
 	void Enable()
 	{

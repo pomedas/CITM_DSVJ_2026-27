@@ -24,11 +24,21 @@ bool Player::Start()
 {
 	// L04: TODO 2: Load the player texture
 	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
+	Engine::GetInstance().textures->GetSize(texture, texW, texH);
+
+	// L08: TODO 5: Add physics to the player - create the physics body: a CAPSULE (CreateCapsule) with fixed rotation, so the player does not roll
+
+	// L08: TODO 6: Assign player class (using "this") to the listener of the pbody. This makes the Physics module to call the OnCollision method
+
+	// L08: TODO 7: Assign collider type
+
 	return true;
 }
 
 bool Player::Update(float dt)
 {
+	// L08: TODO 5: Add physics to the player - updated player position using physics
+
 	// L04: TODO 5: Move the player with WASD, independent of framerate
 	float speed = 200.0f;
 
@@ -49,6 +59,8 @@ bool Player::Update(float dt)
 
 bool Player::Draw()
 {
+	// L08: TODO 5: Add physics to the player - updated player position using physics
+
 	// L04: TODO 4: Render the player texture at its current position
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX(), (int)position.getY());
 	return true;
@@ -60,3 +72,5 @@ bool Player::CleanUp()
 	Engine::GetInstance().textures->UnLoad(texture);
 	return true;
 }
+
+// L08: TODO 6: Define OnCollision function for the player.
