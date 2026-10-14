@@ -16,6 +16,7 @@ class Render;
 class Textures;
 class Audio;
 class Scene;
+class Map;
 // L04: TODO 1: Add a forward declaration to the EntityManager class
 class EntityManager;
 
@@ -91,6 +92,7 @@ public:
 	std::shared_ptr<Textures> textures;
 	std::shared_ptr<Audio> audio;
 	std::shared_ptr<Scene> scene;
+	std::shared_ptr<Map> map;
 	// L04: TODO 1: Declare a new attribute as a smartpointer to the EntityManager
 	std::shared_ptr<EntityManager> entityManager;
 

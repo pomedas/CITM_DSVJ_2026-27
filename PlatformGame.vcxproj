@@ -167,6 +167,7 @@ xcopy /Y "$(ProjectDir)config.xml" "$(OutDir)"</Command>
     <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\Map.cpp" />
     <ClCompile Include="src\PerfTimer.cpp" />
     <ClCompile Include="src\PlatformGame.cpp" />
     <ClCompile Include="src\Player.cpp" />
@@ -184,6 +185,7 @@ xcopy /Y "$(ProjectDir)config.xml" "$(OutDir)"</Command>
     <ClInclude Include="src\EntityManager.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\Map.h" />
     <ClInclude Include="src\Module.h" />
     <ClInclude Include="src\PerfTimer.h" />
     <ClInclude Include="src\Player.h" />
