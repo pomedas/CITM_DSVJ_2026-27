@@ -48,12 +48,15 @@ bool Map::PostUpdate()
 					// tile coordinates to world coordinates, then draw
 					int gid = layer.Get(i, j);
 
-					// L09: TODO 7: This always uses the first tileset -- once
-					// GetTilesetFromTileId() exists, look the right one up per gid instead
-					const TileSet& tileSet = mapData.tilesets.front();
-					SDL_Rect tileRect = tileSet.GetRect(gid);
+					// L09: TODO 7: Look up the right tileset for this gid
+					// instead of always using the first one; also the reason
+					// a gid of 0 (an empty tile) no longer draws garbage
+					const TileSet* tileSet = GetTilesetFromTileId(gid);
+					if (tileSet == nullptr) continue;
+
+					SDL_Rect tileRect = tileSet->GetRect(gid);
 					Vector2D mapCoord = MapToWorld(i, j);
-					Engine::GetInstance().render->DrawTexture(tileSet.texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+					Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
 
 				}
 			}
@@ -146,7 +149,7 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.visible = layerNode.attribute("visible").as_bool(true);
 
 			// L09: TODO 5: Load this layer's custom properties
-			// ...
+			LoadProperties(layerNode, layer.properties);
 
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
@@ -157,31 +160,30 @@ bool Map::Load(std::string path, std::string fileName)
 			mapData.layers.push_back(layer);
 		}
 
-		// L08: TODO 3: Create colliders
-		// Temporary L08 placeholder: a few hand-placed platform colliders so
-		// there is something for the player to stand and jump on.
-		// L09: TODO 8: Replace this whole block with a loop that builds one
-		// rectangle collider per non-empty tile, for any layer whose
-		// "Collision" custom property is true (see the invisible
-		// "Collisions" layer in MapTemplate.tmx) -- colliders derived from
-		// the map's own tile data instead of hardcoded pixel rectangles.
-		Vector2D posC1 = Vector2D(224, 544);
-		int widthC1 = 256;
-		int heightC1 = 64;
-		PhysBody* c1 = Engine::GetInstance().physics->CreateRectangle((int)posC1.getX() + widthC1 / 2, (int)posC1.getY() + heightC1 / 2, widthC1, heightC1, bodyType::STATIC);
-		c1->ctype = ColliderType::PLATFORM;
+		// L09: TODO 8: Build static colliders from the map's own tile data --
+		// replaces L08's hand-placed pixel rectangles. Any layer whose
+		// "Collision" property is true contributes one rectangle per
+		// non-empty tile (the invisible "Collisions" layer in the TMX).
+		for (const auto& layer : mapData.layers)
+		{
+			const Properties::Property* collision = layer.properties.GetProperty("Collision");
+			if (collision == nullptr || !collision->AsBool()) continue;
 
-		Vector2D posC2 = Vector2D(352, 384);
-		int widthC2 = 128;
-		int heightC2 = 64;
-		PhysBody* c2 = Engine::GetInstance().physics->CreateRectangle((int)posC2.getX() + widthC2 / 2, (int)posC2.getY() + heightC2 / 2, widthC2, heightC2, bodyType::STATIC);
-		c2->ctype = ColliderType::PLATFORM;
+			for (int i = 0; i < mapData.width; i++) {
+				for (int j = 0; j < mapData.height; j++) {
 
-		Vector2D posC3 = Vector2D(0, 704);
-		int widthC3 = 544;
-		int heightC3 = 64;
-		PhysBody* c3 = Engine::GetInstance().physics->CreateRectangle((int)posC3.getX() + widthC3 / 2, (int)posC3.getY() + heightC3 / 2, widthC3, heightC3, bodyType::STATIC);
-		c3->ctype = ColliderType::PLATFORM;
+					int gid = layer.Get(i, j);
+					if (gid == 0) continue;
+
+					Vector2D mapCoord = MapToWorld(i, j);
+					PhysBody* body = Engine::GetInstance().physics->CreateRectangle(
+						(int)mapCoord.getX() + mapData.tileWidth / 2,
+						(int)mapCoord.getY() + mapData.tileHeight / 2,
+						mapData.tileWidth, mapData.tileHeight, bodyType::STATIC);
+					body->ctype = ColliderType::PLATFORM;
+				}
+			}
+		}
 
 
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
@@ -227,3 +229,28 @@ Vector2D Map::MapToWorld(int x, int y) const
 	return ret;
 }
 
+// L09: TODO 6: Return the tileset a gid belongs to, nullptr if none match
+const TileSet* Map::GetTilesetFromTileId(int gid) const
+{
+	for (const auto& tileset : mapData.tilesets) {
+		if (gid >= tileset.firstGid && gid < tileset.firstGid + tileset.tileCount) {
+			return &tileset;
+		}
+	}
+
+	return nullptr;
+}
+
+// L09: TODO 4: Parse a <properties> node's <property> children into properties
+bool Map::LoadProperties(const pugi::xml_node& node, Properties& properties)
+{
+	for (pugi::xml_node propertyNode : node.child("properties").children("property"))
+	{
+		Properties::Property property;
+		property.name = propertyNode.attribute("name").as_string();
+		property.value = propertyNode.attribute("value").as_string();
+		properties.list.push_back(property);
+	}
+
+	return true;
+}
