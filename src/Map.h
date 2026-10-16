@@ -8,8 +8,7 @@
 
 struct SDL_Texture;
 
-// L09: TODO 1: Add name/value to Property, and typed accessors below -- value
-// is a string so a property can hold a bool, an int, a float or text
+// L09: TODO 5: Add attributes to the property structure
 struct Properties
 {
 	struct Property
@@ -17,11 +16,7 @@ struct Properties
 		// ...
 	};
 
-	// L09: TODO 1: The properties belonging to a single map or layer node
-	// ...
-
-	// L09: TODO 2: Return the property with this name, or nullptr if none
-	// ...
+	// L09: TODO 7: Implement a method to get the value of a custom property
 };
 
 // L07: TODO 1: Create a struct to hold information for a single map layer
@@ -113,11 +108,11 @@ public:
 	// L07: TODO 8: Translate tile coordinates (i, j) into world (pixel) coordinates
 	Vector2D MapToWorld(int i, int j) const;
 
-	// L09: TODO 6: Return the tileset a gid belongs to, nullptr if none match
-	// ...
+	// L09: TODO 2: Implement function to the Tileset based on a tile id
+	TileSet* GetTilesetFromTileId(int gid) const;
 
-	// L09: TODO 4: Parse a <properties> node's <property> children into properties
-	// ...
+	// L09: TODO 6: Load a group of properties 
+	bool LoadProperties(pugi::xml_node& node, Properties& properties);
 
 public:
 	std::string mapFileName;

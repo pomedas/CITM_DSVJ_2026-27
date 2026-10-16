@@ -37,10 +37,6 @@ bool Map::PostUpdate()
 
 		// L07: TODO 5: Draw every tile in every layer
 		for (const auto& layer : mapData.layers) {
-			// Helper layers (e.g. the collision mask) are never meant to be
-			// seen -- skip anything Tiled itself marked not visible.
-			if (!layer.visible) continue;
-
 			for (int i = 0; i < mapData.width; i++) {
 				for (int j = 0; j < mapData.height; j++) {
 
@@ -48,9 +44,9 @@ bool Map::PostUpdate()
 					// tile coordinates to world coordinates, then draw
 					int gid = layer.Get(i, j);
 
-					// L09: TODO 7: This always uses the first tileset -- once
-					// GetTilesetFromTileId() exists, look the right one up per gid instead
+					//L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
 					const TileSet& tileSet = mapData.tilesets.front();
+
 					SDL_Rect tileRect = tileSet.GetRect(gid);
 					Vector2D mapCoord = MapToWorld(i, j);
 					Engine::GetInstance().render->DrawTexture(tileSet.texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
@@ -145,8 +141,7 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.height = layerNode.attribute("height").as_int();
 			layer.visible = layerNode.attribute("visible").as_bool(true);
 
-			// L09: TODO 5: Load this layer's custom properties
-			// ...
+			//L09: TODO 6 Call Load Layer Properties
 
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
@@ -157,14 +152,13 @@ bool Map::Load(std::string path, std::string fileName)
 			mapData.layers.push_back(layer);
 		}
 
+		// L09: TODO 8: Create colliders from map metadata
+		// Replace L08 TODO 3 with a loop that builds one
+		// rectangle collider per non-empty tile, for any layer whose
+
 		// L08: TODO 3: Create colliders
 		// Temporary L08 placeholder: a few hand-placed platform colliders so
 		// there is something for the player to stand and jump on.
-		// L09: TODO 8: Replace this whole block with a loop that builds one
-		// rectangle collider per non-empty tile, for any layer whose
-		// "Collision" custom property is true (see the invisible
-		// "Collisions" layer in MapTemplate.tmx) -- colliders derived from
-		// the map's own tile data instead of hardcoded pixel rectangles.
 		Vector2D posC1 = Vector2D(224, 544);
 		int widthC1 = 256;
 		int heightC1 = 64;
@@ -223,6 +217,22 @@ Vector2D Map::MapToWorld(int x, int y) const
 
 	ret.setX((float)(x * mapData.tileWidth));
 	ret.setY((float)(y * mapData.tileHeight));
+
+	return ret;
+}
+
+// L09: TODO 2: Implement function to the Tileset based on a tile id
+TileSet* Map::GetTilesetFromTileId(int gid) const
+{
+	TileSet* set = nullptr;
+
+	return set;
+}
+
+// L09: TODO 6: Load a group of properties from a node and fill a list with it
+bool Map::LoadProperties(pugi::xml_node& node, Properties& properties)
+{
+	bool ret = true;
 
 	return ret;
 }
