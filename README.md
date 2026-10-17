@@ -1,162 +1,99 @@
-# L08 — Physics (Solution)
+# L09 — Map Collisions
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L08_Physics`. Builds on `L07_TileMap_Drawing_Solution`.
-All seven TODOs are filled in — this is what your engine should look like at the
-end of the lecture.
+Builds on `L08_Physics_Solution`. Adds custom properties to the map module
+and uses them to build static colliders from the map's own data. Check
+`L09_Map_Collision_Solution` once you're done, or if you get stuck.
 
 ## The idea
 
-The `Physics` module (`src/Physics.h`/`.cpp`, Box2D 3.x) is handed to you
-**complete** — it is not a TODO exercise. It is infrastructure, the same way
-`Render` or `Textures` are: you call it, you don't build it. Your work this
-lecture is attaching physics bodies to `Player` and the new `Item` entity, and
-reacting to the collisions Physics reports back to them.
+L08 gave the player something to stand on with three hand-placed rectangles in
+`Map::Load()`, called out at the time as a placeholder. This lecture builds
+the real mechanism: **custom properties on Tiled layers** decide what is
+drawn and what is solid.
 
-A `Scene`-created `Item` (a coin) and three hand-placed platform colliders in
-`Map::Load()` give the player something to land on and something to pick up.
-Both are placeholder level content — L09 (Map collisions) replaces the
-hardcoded platform rectangles with colliders derived from the map's own tile
-data.
+Two layer properties are involved (both booleans, set in Tiled):
+
+- `Draw` — the layer is drawn by `Map::PostUpdate()` only if this is `true`.
+- `Collision` — every tile of this layer whose gid is the collider tile
+  becomes one static rectangle body.
+
+In class you will, in Tiled: add the `MapMetadata` tileset
+(`Assets/Maps/MapMetadata.png`, 32×32 tiles), create a `Collisions` layer,
+paint the collider tile over the solid terrain, and add the two properties to
+your layers. `MapTemplate.tmx` ships with only the `Map` layer and no
+properties, so **until you add `Draw = true` to a layer, TODO 7 will hide it**.
 
 ## What each TODO does
 
-| Marker | File | Answer |
+The numbering starts at 2 and skips 4 on purpose: it matches the slides.
+
+| Marker | File | What you write |
 |---|---|---|
-| `L08: TODO 1` | `vcpkg.json` | `box2d` is a dependency |
-| `L08: TODO 2` | `Engine.h`/`.cpp`, `Entity.h`, project file | `Physics.h`/`.cpp` are in the project, and the `Physics` module is declared, instantiated and registered in `Engine`; `Entity` declares `OnCollision()`/`OnCollisionEnd()` |
-| `L08: TODO 3` | `src/Map.cpp` | Three hand-placed static platform colliders via `CreateRectangle()` (`ctype = PLATFORM`) |
-| `L08: TODO 4` | `src/Item.h`/`.cpp`, `src/Scene.cpp` | The item's own `CreateCircle()` body, syncing `position` from it every `Update()`; an `Item` created through the entity manager at `(200, 672)` |
-| `L08: TODO 5` | `src/Player.h`/`.cpp` | `pbody` is a `CreateCapsule()` body, not a circle — fixed rotation, so the player doesn't roll; `Draw()` offsets by half the sprite size since `position` is now the body's center |
-| `L08: TODO 6` | `src/Player.h`/`.cpp` | `pbody->listener = this`, plus `OnCollision()`/`OnCollisionEnd()`: reset the jump flag on `PLATFORM`, play a sound and destroy the item on `ITEM` |
-| `L08: TODO 7` | `src/Player.cpp`, `src/Item.cpp` | `pbody->ctype` — without this, `OnCollision()`'s `switch` on `physB->ctype` can't tell what it hit |
+| `L09: TODO 2` | `src/Map.h`/`.cpp` | `Map::GetTilesetFromTileId()` — return the tileset whose gid range contains the gid, `nullptr` if none |
+| `L09: TODO 3` | `src/Map.cpp` `PostUpdate()` | Use `GetTilesetFromTileId(gid)` in the draw loop instead of `tilesets.front()` |
+| `L09: TODO 5` | `src/Map.h` | Define `Properties` (`Property` with a name and a value, and a `std::vector<Property>`) and give `MapLayer` a `Properties properties` member |
+| `L09: TODO 6` | `src/Map.h`/`.cpp` | Implement `Map::LoadLayerProperties()` and call it for each `<layer>` in `Load()` |
+| `L09: TODO 7` | `src/Map.h`, `src/Map.cpp` | `Properties::GetProperty(name)` (`nullptr` if missing), then use it in `PostUpdate()` to draw only layers with `Draw` set |
+| `L09: TODO 8` | `src/Map.h`/`.cpp` | In `Load()`, build a static `CreateRectangle()` (`ctype = PLATFORM`) per collider tile, for each layer with `Collision` set. Add a `colliderGid` member for the tile id |
 
-`physics` is registered right before `render` (see below): registration order
-is draw order, and the debug wireframes must be drawn after the map and the
-entities.
+The L08 hand-placed colliders are still in the handout, below the TODO 8
+marker. They keep working until you replace them.
 
-## Why the frame's `dt` gets a fixed-timestep accumulator
+## Why `Properties` is `std::vector<Property>` by value, no destructor
 
-`Physics::PreUpdate()` used to call `b2World_Step(world, dt, 4)` with the raw
-frame `dt`. Box2D's solver is not timestep-independent — its docs require a
-fixed step — so jump arcs would change with frame rate, and Assignment 1's own
-acceptance test ("set `frcap` to 16, 32, 64 and everything moves at the same
-speed") could not pass. Now `PreUpdate()` accumulates `dt` (already seconds,
-since L02) and steps the world in fixed `1/60`s chunks:
+`MapLayer` holds a `Properties` **by value**, and `MapData::layers` is a
+`std::vector<MapLayer>` (the L07 decision). If `Properties` owned a
+`std::list<Property*>` with a hand-written destructor and no copy/move
+constructor, the first time that vector reallocates the copied `Properties`
+and the original would both think they own the same `Property*` pointers, and
+the first one destroyed would double-delete them. `std::vector<Property>`
+needs no destructor at all, the same lesson `TileSet` taught at L06.
+
+## Why `GetTilesetFromTileId()` matters even with one visible tileset
+
+The obvious-looking implementation assigns the current tileset to the return
+value on every iteration and only then tests the range:
 
 ```cpp
-accumulator += Engine::GetInstance().GetDt();
-int steps = 0;
-while (accumulator >= FIXED_TIMESTEP && steps < MAX_STEPS) {
-    b2World_Step(world, FIXED_TIMESTEP, 4);
-    accumulator -= FIXED_TIMESTEP;
-    ++steps;
+const TileSet* set = nullptr;
+for (const auto& tileset : mapData.tilesets) {
+    set = &tileset;                         // wrong: assigned before testing
+    if (/* gid is in this tileset's range */) break;
 }
-if (steps == MAX_STEPS) accumulator = 0.0f;
+return set;                                 // never nullptr
 ```
 
-`GetDt()` is a new one-line accessor on `Engine` — `Physics::PreUpdate()` needs
-`dt` but `PreUpdate()` doesn't receive it as a parameter the way `Update(dt)`
-does.
-
-**The `MAX_STEPS` clamp is not optional.** Without it, a long stall (a
-breakpoint, a slow frame) makes the accumulator huge, the catch-up loop runs
-hundreds of steps, that takes longer still, and the accumulator grows further
-— the spiral of death. If you've ever paused at a breakpoint and watched
-everything lurch forward on resume, this is the fix. The old `/ 1000.0f` some
-of you may recognise from other engines is gone: `dt` has been seconds since
-L02.
-
-## Why a capsule instead of a circle — and why not a box
-
-The player never rolled because of the circle shape — nothing ever called
-`b2Body_SetFixedRotation`. A free-rotating body spins whatever shape it is.
-Setting `def.fixedRotation = true` inside `CreateCapsule()` is most of the
-fix by itself.
-
-The reason it's `CreateCapsule()` and not a box: L09 builds map colliders as
-one rectangle per solid tile, so the ground is a row of separate boxes with
-shared vertical edges — a box player snags on those seams. A capsule's rounded
-ends ride over them.
-
-**Honest limitation:** a capsule whose height equals its width *is* a circle
-— the segment between its two end-caps has zero length. The player sprite is
-32×32, so `CreateCapsule(x, y, texW, texH, ...)` produces exactly the same
-shape `CreateCircle` did. The visible improvement here comes entirely from
-`fixedRotation`; the capsule earns its keep the moment a sprite is taller than
-it is wide, which is what you get the first time you use your own art.
-
-## `AddSensorShape()`: built now, used in Assignment 1
-
-`CreateRectangleSensor()` already existed, but it creates a **separate body**
-— useless as a foot sensor, since it would have to be moved in sync with the
-player every single frame. A sensor needs to be a second *shape* on the body
-that's already moving. `AddSensorShape(PhysBody* p, int offsetX, int offsetY,
-int w, int h)` attaches one via `b2MakeOffsetBox()` + `b2CreatePolygonShape()`,
-`isSensor = true`. Assignment 1 asks for ground and wall sensors — this is the
-tool; building the behaviour on top of it is your job there, not here.
-
-## Why physics is created in `Awake()` and registered right before `render`
-
-The debug wireframes (below) used to be invisible: `Physics` was registered
-before `map`/`scene`/`entityManager` (so that `physics->world` existed before
-`Map::Load()`'s colliders and `Player`/`Item`'s bodies needed it), and
-registration order is draw order. That put `Physics::PostUpdate()`'s
-`b2World_Draw()` call *before* the map's tiles and the entities' sprites, so
-every wireframe got painted over the instant those drew.
-
-The fix: `world = b2CreateWorld(...)` moved from `Physics::Start()` to
-`Physics::Awake()`. Every module's `Awake()` runs before any module's
-`Start()`, so `Map::Start()`/`EntityManager::Start()` see `physics->world`
-already alive no matter where `physics` sits in the registration list — the
-dependency that used to force `physics` early is gone. That frees it to be
-registered by draw order instead: right before `render`, so its debug draw
-happens *after* the map and the entities and stays visible on top of them.
-
-## Small things fixed alongside the above
-
-- `METER_PER_PIXEL` is now `1.0f / PIXELS_PER_METER`, derived instead of a
-  second hand-maintained constant with a comment warning you to keep them in
-  sync.
-- `bodyType` is an `enum class` — it used to leak `DYNAMIC`/`STATIC`/`KINEMATIC`
-  into the global namespace right next to the already-scoped `enum class
-  ColliderType`.
-- `CreateCircle`'s `radious` parameter is spelled correctly now.
-- The physics constants (`GRAVITY_X/Y`, `PIXELS_PER_METER`, `METER_PER_PIXEL`,
-  `DEGTORAD`, `RADTODEG`) are `constexpr`, not `#define` — type-checked and
-  visible in the debugger.
-- `Physics::DeletePhysBody()` no longer dereferences `physBody->listener`
-  without checking it for null first (platform colliders never set a
-  listener), and the queued `PhysBody*` objects are actually freed once their
-  Box2D body is destroyed, instead of leaking.
+A gid that belongs to no tileset falls out of the loop returning the *last*
+tileset, so the caller's null check is dead code and you draw garbage instead
+of catching the problem. **Return inside the `if`**, and `nullptr` after the
+loop. This map has two tilesets (the desert tiles and the 2-tile metadata
+tileset), so the lookup is already doing real work.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move, **space**
-jumps, and the player should land on the platforms without rolling. Walk into
-the coin near `(200, 672)` to pick it up (with a sound) and watch it vanish.
-Press **F1** to toggle the Box2D debug wireframes.
+Open `PlatformGame.sln`, select **x64**, build and run. Before the TODOs the
+player lands on the same three platforms as L08. After TODO 8 the player
+collides with the whole level: walls, floor and both floating platforms. Press
+**F1** for the Box2D debug wireframes; every collider tile gets one.
 
 ## Read the code
 
-Start at `Physics::PreUpdate()` for the accumulator, then `CreateCapsule()` and
-`AddSensorShape()` in `src/Physics.cpp`. Then `Player::Start()` and
-`Item::Start()` for how a body actually gets attached, and
-`Player::OnCollision()` for how a `ColliderType` on the other body turns into
-gameplay.
+Start at the end of `Map::Load()`, where the L08 colliders and the TODO 8
+comment sit. `Map::PostUpdate()` is where the layer properties and the tileset
+lookup are used.
 
 ## Homework
 
-- Compare this branch against `L08_Physics` — the diff should be nothing but
-  the TODO bodies.
-- Set a breakpoint anywhere inside `Physics::PreUpdate()`, let the game sit
-  paused for a few seconds, then resume. Confirm nothing lurches.
-- The `MapTemplate.tmx` platforms are hardcoded pixel rectangles in
-  `Map::Load()`. What would you need to derive the same colliders from the
-  map's own layer data instead?
+- Compare this branch with `L09_Map_Collision_Solution` once you're done; the
+  diff should be nothing but TODO bodies.
+- The solution compares a gid (`colliderGid = 49`) as well as the layer flag.
+  What would you change in `Properties` to move that number into the map?
+- Add a third tileset in Tiled and confirm `GetTilesetFromTileId()` keeps
+  drawing correctly.
 
 ## Reference
 
-- Box2D 3.x manual — <https://box2d.org/documentation/>
-- Fix Your Timestep! (Gaffer On Games) — <https://gafferongames.com/post/fix_your_timestep/>
+- Tiled: custom properties — <https://doc.mapeditor.org/en/stable/manual/custom-properties/>
+- Tiled TMX format — <https://doc.mapeditor.org/en/stable/reference/tmx-map-format/>

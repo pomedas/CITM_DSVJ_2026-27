@@ -37,19 +37,26 @@ bool Map::PostUpdate()
 
 		// L07: TODO 5: Draw every tile in every layer
 		for (const auto& layer : mapData.layers) {
-			for (int i = 0; i < mapData.width; i++) {
-				for (int j = 0; j < mapData.height; j++) {
 
-					// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
-					// tile coordinates to world coordinates, then draw
-					int gid = layer.Get(i, j);
-					const TileSet& tileSet = mapData.tilesets.front();
-					SDL_Rect tileRect = tileSet.GetRect(gid);
-					Vector2D mapCoord = MapToWorld(i, j);
-					Engine::GetInstance().render->DrawTexture(tileSet.texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+			// L09: TODO 7: Implement a method to get the value of a custom property and check if the layer is visible before drawing
 
+				for (int i = 0; i < mapData.width; i++) {
+					for (int j = 0; j < mapData.height; j++) {
+
+						// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
+						// tile coordinates to world coordinates, then draw
+						int gid = layer.Get(i, j);
+
+						// L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
+						const TileSet* tileSet = &mapData.tilesets.front();
+
+						SDL_Rect tileRect = tileSet->GetRect(gid);
+						Vector2D mapCoord = MapToWorld(i, j);
+						Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+
+					}
 				}
-			}
+			
 		}
 	}
 
@@ -137,6 +144,9 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.width = layerNode.attribute("width").as_int();
 			layer.height = layerNode.attribute("height").as_int();
 
+			// L09: TODO 6: Call Load Layer Properties
+			// ...
+
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
 			{
@@ -146,8 +156,14 @@ bool Map::Load(std::string path, std::string fileName)
 			mapData.layers.push_back(layer);
 		}
 
+		// L09: TODO 8: Create colliders from map metadata
+		// Replace L08 TODO 3 with a loop that builds one
+		// rectangle collider per collider tile, for any layer whose "Collision"
+		// property is true.
+
 		// L08: TODO 3: Create colliders
-		// For the moment create 3 colliders at fixed positions for the platforms in the map
+		// Temporary L08 placeholder: a few hand-placed platform colliders so
+		// there is something for the player to stand and jump on.
 		Vector2D posC1 = Vector2D(224, 544);
 		int widthC1 = 256;
 		int heightC1 = 64;
@@ -209,3 +225,21 @@ Vector2D Map::MapToWorld(int x, int y) const
 
 	return ret;
 }
+
+// L09: TODO 2: Implement function to the Tileset based on a tile id
+const TileSet* Map::GetTilesetFromTileId(int gid) const
+{
+	// ..
+	return nullptr;
+}
+
+// L09: TODO 6: Load a group of properties from a node and fill a list with it
+bool Map::LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties)
+{
+	bool ret = true;
+
+	// ... Load properties from the layerNode into the properties object
+	
+	return ret;
+}
+
