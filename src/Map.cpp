@@ -37,27 +37,28 @@ bool Map::PostUpdate()
 
 		// L07: TODO 5: Draw every tile in every layer
 		for (const auto& layer : mapData.layers) {
-			// Helper layers (e.g. the collision mask) are never meant to be
-			// seen -- skip anything Tiled itself marked not visible.
-			if (!layer.visible) continue;
 
-			for (int i = 0; i < mapData.width; i++) {
-				for (int j = 0; j < mapData.height; j++) {
+			// L09: TODO 7: Implement a method to get the value of a custom property and check if the layer is visible before drawing
+			const Properties::Property* property = layer.properties.GetProperty("Draw");
+			if (property != nullptr && property->value == true) { //We only enter if the Draw property is set to true
 
-					// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
-					// tile coordinates to world coordinates, then draw
-					int gid = layer.Get(i, j);
+				for (int i = 0; i < mapData.width; i++) {
+					for (int j = 0; j < mapData.height; j++) {
 
-					// L09: TODO 7: Look up the right tileset for this gid
-					// instead of always using the first one; also the reason
-					// a gid of 0 (an empty tile) no longer draws garbage
-					const TileSet* tileSet = GetTilesetFromTileId(gid);
-					if (tileSet == nullptr) continue;
+						// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
+						// tile coordinates to world coordinates, then draw
+						int gid = layer.Get(i, j);
 
-					SDL_Rect tileRect = tileSet->GetRect(gid);
-					Vector2D mapCoord = MapToWorld(i, j);
-					Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+						//L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
+						if (gid != 0) {
+							const TileSet* tileSet = GetTilesetFromTileId(gid);
 
+							SDL_Rect tileRect = tileSet->GetRect(gid);
+							Vector2D mapCoord = MapToWorld(i, j);
+							Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+						}
+
+					}
 				}
 			}
 		}
@@ -146,10 +147,9 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.name = layerNode.attribute("name").as_string();
 			layer.width = layerNode.attribute("width").as_int();
 			layer.height = layerNode.attribute("height").as_int();
-			layer.visible = layerNode.attribute("visible").as_bool(true);
 
-			// L09: TODO 5: Load this layer's custom properties
-			LoadProperties(layerNode, layer.properties);
+			//L09: TODO 6 Call Load Layer Properties
+			LoadLayerProperties(layerNode, layer.properties);
 
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
@@ -160,30 +160,31 @@ bool Map::Load(std::string path, std::string fileName)
 			mapData.layers.push_back(layer);
 		}
 
-		// L09: TODO 8: Build static colliders from the map's own tile data --
-		// replaces L08's hand-placed pixel rectangles. Any layer whose
-		// "Collision" property is true contributes one rectangle per
-		// non-empty tile (the invisible "Collisions" layer in the TMX).
+		// L09: TODO 8: Create colliders from map metadata
+		// Replace L08 TODO 3 with a loop that builds one
+		// rectangle collider per non-empty tile, for any layer whose
 		for (const auto& layer : mapData.layers)
 		{
-			const Properties::Property* collision = layer.properties.GetProperty("Collision");
-			if (collision == nullptr || !collision->AsBool()) continue;
+			const Properties::Property* collisionLayer = layer.properties.GetProperty("Collision");
+			if (collisionLayer != nullptr && collisionLayer->value == true) {
+				for (int i = 0; i < mapData.width; i++) {
+					for (int j = 0; j < mapData.height; j++) {
 
-			for (int i = 0; i < mapData.width; i++) {
-				for (int j = 0; j < mapData.height; j++) {
-
-					int gid = layer.Get(i, j);
-					if (gid == 0) continue;
-
-					Vector2D mapCoord = MapToWorld(i, j);
-					PhysBody* body = Engine::GetInstance().physics->CreateRectangle(
-						(int)mapCoord.getX() + mapData.tileWidth / 2,
-						(int)mapCoord.getY() + mapData.tileHeight / 2,
-						mapData.tileWidth, mapData.tileHeight, bodyType::STATIC);
-					body->ctype = ColliderType::PLATFORM;
+						int gid = layer.Get(i, j);
+						if (gid != 0 && gid == colliderGid) {
+							Vector2D mapCoord = MapToWorld(i, j);
+							PhysBody* body = Engine::GetInstance().physics->CreateRectangle((int)mapCoord.getX() + mapData.tileWidth / 2,
+																							(int)mapCoord.getY() + mapData.tileHeight / 2,
+																							mapData.tileWidth, 
+																							mapData.tileHeight, 
+																							bodyType::STATIC);
+							body->ctype = ColliderType::PLATFORM;
+						}
+					}
 				}
 			}
 		}
+		
 
 
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
@@ -229,28 +230,30 @@ Vector2D Map::MapToWorld(int x, int y) const
 	return ret;
 }
 
-// L09: TODO 6: Return the tileset a gid belongs to, nullptr if none match
+// L09: TODO 2: Implement function to the Tileset based on a tile id
 const TileSet* Map::GetTilesetFromTileId(int gid) const
 {
-	for (const auto& tileset : mapData.tilesets) {
-		if (gid >= tileset.firstGid && gid < tileset.firstGid + tileset.tileCount) {
-			return &tileset;
-		}
+	for (const auto& tileset : mapData.tilesets)
+	{
+		if (gid >= tileset.firstGid && gid < tileset.firstGid + tileset.tileCount)
+			return &tileset;  
 	}
 
+	LOG("Map: gid %d does not belong to any tileset", gid);
 	return nullptr;
 }
 
-// L09: TODO 4: Parse a <properties> node's <property> children into properties
-bool Map::LoadProperties(const pugi::xml_node& node, Properties& properties)
+// L09: TODO 6: Load a group of properties from a node and fill a list with it
+bool Map::LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties)
 {
-	for (pugi::xml_node propertyNode : node.child("properties").children("property"))
+	bool ret = true;
+	for (pugi::xml_node propertyNode = layerNode.child("properties").child("property"); propertyNode; propertyNode = propertyNode.next_sibling("property"))
 	{
 		Properties::Property property;
 		property.name = propertyNode.attribute("name").as_string();
-		property.value = propertyNode.attribute("value").as_string();
-		properties.list.push_back(property);
+		property.value = propertyNode.attribute("value").as_bool(); // we assume the property is a boolean for simplicity; adjust as needed
+		properties.propertyList.push_back(property);
 	}
-
-	return true;
+	return ret;
 }
+
