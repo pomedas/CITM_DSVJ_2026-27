@@ -39,6 +39,8 @@ bool Map::PostUpdate()
 		for (const auto& layer : mapData.layers) {
 
 			// L09: TODO 7: Implement a method to get the value of a custom property and check if the layer is visible before drawing
+			const Properties::Property* property = layer.properties.GetProperty("Draw");
+			if (property != nullptr && property->value == true) { //We only enter if the Draw property is set to true
 
 				for (int i = 0; i < mapData.width; i++) {
 					for (int j = 0; j < mapData.height; j++) {
@@ -48,15 +50,17 @@ bool Map::PostUpdate()
 						int gid = layer.Get(i, j);
 
 						// L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
-						const TileSet* tileSet = &mapData.tilesets.front();
+						if (gid != 0) {
+							const TileSet* tileSet = GetTilesetFromTileId(gid);
 
-						SDL_Rect tileRect = tileSet->GetRect(gid);
-						Vector2D mapCoord = MapToWorld(i, j);
-						Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+							SDL_Rect tileRect = tileSet->GetRect(gid);
+							Vector2D mapCoord = MapToWorld(i, j);
+							Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+						}
 
 					}
 				}
-			
+			}
 		}
 	}
 
@@ -145,7 +149,7 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.height = layerNode.attribute("height").as_int();
 
 			// L09: TODO 6: Call Load Layer Properties
-			// ...
+			LoadLayerProperties(layerNode, layer.properties);
 
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
@@ -160,27 +164,28 @@ bool Map::Load(std::string path, std::string fileName)
 		// Replace L08 TODO 3 with a loop that builds one
 		// rectangle collider per collider tile, for any layer whose "Collision"
 		// property is true.
+		for (const auto& layer : mapData.layers)
+		{
+			const Properties::Property* collisionLayer = layer.properties.GetProperty("Collision");
+			if (collisionLayer != nullptr && collisionLayer->value == true) {
+				for (int i = 0; i < mapData.width; i++) {
+					for (int j = 0; j < mapData.height; j++) {
 
-		// L08: TODO 3: Create colliders
-		// Temporary L08 placeholder: a few hand-placed platform colliders so
-		// there is something for the player to stand and jump on.
-		Vector2D posC1 = Vector2D(224, 544);
-		int widthC1 = 256;
-		int heightC1 = 64;
-		PhysBody* c1 = Engine::GetInstance().physics->CreateRectangle((int)posC1.getX() + widthC1 / 2, (int)posC1.getY() + heightC1 / 2, widthC1, heightC1, bodyType::STATIC);
-		c1->ctype = ColliderType::PLATFORM;
-
-		Vector2D posC2 = Vector2D(352, 384);
-		int widthC2 = 128;
-		int heightC2 = 64;
-		PhysBody* c2 = Engine::GetInstance().physics->CreateRectangle((int)posC2.getX() + widthC2 / 2, (int)posC2.getY() + heightC2 / 2, widthC2, heightC2, bodyType::STATIC);
-		c2->ctype = ColliderType::PLATFORM;
-
-		Vector2D posC3 = Vector2D(0, 704);
-		int widthC3 = 544;
-		int heightC3 = 64;
-		PhysBody* c3 = Engine::GetInstance().physics->CreateRectangle((int)posC3.getX() + widthC3 / 2, (int)posC3.getY() + heightC3 / 2, widthC3, heightC3, bodyType::STATIC);
-		c3->ctype = ColliderType::PLATFORM;
+						int gid = layer.Get(i, j);
+						if (gid != 0 && gid == colliderGid) {
+							Vector2D mapCoord = MapToWorld(i, j);
+							PhysBody* body = Engine::GetInstance().physics->CreateRectangle((int)mapCoord.getX() + mapData.tileWidth / 2,
+																							(int)mapCoord.getY() + mapData.tileHeight / 2,
+																							mapData.tileWidth, 
+																							mapData.tileHeight, 
+																							bodyType::STATIC);
+							body->ctype = ColliderType::PLATFORM;
+						}
+					}
+				}
+			}
+		}
+		
 
 
 		// L06: TODO 5: LOG all the data loaded, iterating all tilesets
@@ -229,7 +234,13 @@ Vector2D Map::MapToWorld(int x, int y) const
 // L09: TODO 2: Implement function to the Tileset based on a tile id
 const TileSet* Map::GetTilesetFromTileId(int gid) const
 {
-	// ..
+	for (const auto& tileset : mapData.tilesets)
+	{
+		if (gid >= tileset.firstGid && gid < tileset.firstGid + tileset.tileCount)
+			return &tileset;  
+	}
+
+	LOG("Map: gid %d does not belong to any tileset", gid);
 	return nullptr;
 }
 
@@ -237,9 +248,13 @@ const TileSet* Map::GetTilesetFromTileId(int gid) const
 bool Map::LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties)
 {
 	bool ret = true;
-
-	// ... Load properties from the layerNode into the properties object
-	
+	for (pugi::xml_node propertyNode = layerNode.child("properties").child("property"); propertyNode; propertyNode = propertyNode.next_sibling("property"))
+	{
+		Properties::Property property;
+		property.name = propertyNode.attribute("name").as_string();
+		property.value = propertyNode.attribute("value").as_bool(); // we assume the property is a boolean for simplicity; adjust as needed
+		properties.propertyList.push_back(property);
+	}
 	return ret;
 }
 

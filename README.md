@@ -1,45 +1,45 @@
-# L09 — Map Collisions
+# L09 — Map Collisions (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-Builds on `L08_Physics_Solution`. Adds custom properties to the map module
-and uses them to build static colliders from the map's own data. Check
-`L09_Map_Collision_Solution` once you're done, or if you get stuck.
+The completed version of `L09_Map_Collision`. Builds on
+`L08_Physics_Solution`. All the TODOs are filled in; this is what your engine
+should look like at the end of the lecture.
 
 ## The idea
 
 L08 gave the player something to stand on with three hand-placed rectangles in
-`Map::Load()`, called out at the time as a placeholder. This lecture builds
-the real mechanism: **custom properties on Tiled layers** decide what is
-drawn and what is solid.
+`Map::Load()`, a placeholder. This lecture replaces it: **custom properties on
+Tiled layers** decide what is drawn and what is solid.
 
-Two layer properties are involved (both booleans, set in Tiled):
+`MapTemplate.tmx` now has two layers and a second tileset:
 
-- `Draw` — the layer is drawn by `Map::PostUpdate()` only if this is `true`.
-- `Collision` — every tile of this layer whose gid is the collider tile
-  becomes one static rectangle body.
+- `Map` — the visible level, flagged `Draw = true`.
+- `Collisions` — painted with the `MapMetadata` tileset (`Assets/Maps/MapMetadata.png`).
+  Flagged `Collision = true` and `Draw = true`, so the collider tiles are
+  visible while you debug. Set `Draw` to `false` to hide them.
 
-In class you will, in Tiled: add the `MapMetadata` tileset
-(`Assets/Maps/MapMetadata.png`, 32×32 tiles), create a `Collisions` layer,
-paint the collider tile over the solid terrain, and add the two properties to
-your layers. `MapTemplate.tmx` ships with only the `Map` layer and no
-properties, so **until you add `Draw = true` to a layer, TODO 7 will hide it**.
+`Map::PostUpdate()` draws a layer only if its `Draw` property is true.
+`Map::Load()` creates one static rectangle (`ctype = PLATFORM`) for every tile
+in a `Collision` layer whose gid is `colliderGid` (49, the first metadata
+tile). The three L08 hand-placed colliders are gone; the map covers the whole
+level.
 
 ## What each TODO does
 
 The numbering starts at 2 and skips 4 on purpose: it matches the slides.
 
-| Marker | File | What you write |
+| Marker | File | Answer |
 |---|---|---|
-| `L09: TODO 2` | `src/Map.h`/`.cpp` | `Map::GetTilesetFromTileId()` — return the tileset whose gid range contains the gid, `nullptr` if none |
-| `L09: TODO 3` | `src/Map.cpp` `PostUpdate()` | Use `GetTilesetFromTileId(gid)` in the draw loop instead of `tilesets.front()` |
-| `L09: TODO 5` | `src/Map.h` | Define `Properties` (`Property` with a name and a value, and a `std::vector<Property>`) and give `MapLayer` a `Properties properties` member |
-| `L09: TODO 6` | `src/Map.h`/`.cpp` | Implement `Map::LoadLayerProperties()` and call it for each `<layer>` in `Load()` |
-| `L09: TODO 7` | `src/Map.h`, `src/Map.cpp` | `Properties::GetProperty(name)` (`nullptr` if missing), then use it in `PostUpdate()` to draw only layers with `Draw` set |
-| `L09: TODO 8` | `src/Map.h`/`.cpp` | In `Load()`, build a static `CreateRectangle()` (`ctype = PLATFORM`) per collider tile, for each layer with `Collision` set. Add a `colliderGid` member for the tile id |
+| `L09: TODO 2` | `src/Map.h`/`.cpp` | `Map::GetTilesetFromTileId()` returns the tileset whose range contains the gid, `nullptr` (with a `LOG`) otherwise |
+| `L09: TODO 3` | `src/Map.cpp` `PostUpdate()` | The draw loop skips empty tiles and uses `GetTilesetFromTileId(gid)` |
+| `L09: TODO 5` | `src/Map.h` | `Properties` holds a `std::vector<Property>` (`name`, `bool value`); `MapLayer` has a `Properties properties` member |
+| `L09: TODO 6` | `src/Map.h`/`.cpp` | `Map::LoadLayerProperties()` parses `<properties>`; `Load()` calls it per layer |
+| `L09: TODO 7` | `src/Map.h`, `src/Map.cpp` | `Properties::GetProperty()` returns `const Property*` or `nullptr`; `PostUpdate()` draws only layers with `Draw` true |
+| `L09: TODO 8` | `src/Map.h`/`.cpp` | `colliderGid` member, and the collider loop in `Load()` replacing the L08 placeholder |
 
-The L08 hand-placed colliders are still in the handout, below the TODO 8
-marker. They keep working until you replace them.
+`Property::value` is a `bool` for now; widening it to strings and ints is
+left for when a feature needs it.
 
 ## Why `Properties` is `std::vector<Property>` by value, no destructor
 
@@ -73,22 +73,22 @@ tileset), so the lookup is already doing real work.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. Before the TODOs the
-player lands on the same three platforms as L08. After TODO 8 the player
-collides with the whole level: walls, floor and both floating platforms. Press
-**F1** for the Box2D debug wireframes; every collider tile gets one.
+Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move, **space**
+jumps. The player now collides with the map's walls and floor, not just the
+three old platforms. Press **F1** for the Box2D debug wireframes; every
+collider tile gets one.
 
 ## Read the code
 
-Start at the end of `Map::Load()`, where the L08 colliders and the TODO 8
-comment sit. `Map::PostUpdate()` is where the layer properties and the tileset
-lookup are used.
+Start at the collider loop at the end of `Map::Load()`, then
+`Properties::GetProperty()` and `Map::LoadLayerProperties()` for where the
+`Collision` and `Draw` flags come from.
 
 ## Homework
 
-- Compare this branch with `L09_Map_Collision_Solution` once you're done; the
-  diff should be nothing but TODO bodies.
-- The solution compares a gid (`colliderGid = 49`) as well as the layer flag.
+- Compare this branch with `L09_Map_Collision`; the diff should be nothing but
+  TODO bodies plus the finished `MapTemplate.tmx`.
+- The loop still compares a gid (`colliderGid = 49`) as well as the layer flag.
   What would you change in `Properties` to move that number into the map?
 - Add a third tileset in Tiled and confirm `GetTilesetFromTileId()` keeps
   drawing correctly.

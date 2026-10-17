@@ -13,13 +13,20 @@ struct Properties
 {
 	struct Property
 	{
-		// ...
+		std::string name;
+		bool value;
 	};
 
-	// ...
+	std::vector<Property> propertyList;
 
 	// L09: TODO 7: Implement a method to get the value of a custom property
-	// ...
+	const Property* GetProperty(const std::string& name) const
+	{
+		for (const auto& property : propertyList) {
+			if (property.name == name) return &property;
+		}
+		return nullptr;
+	}
 };
 
 // L07: TODO 1: Create a struct to hold information for a single map layer
@@ -32,7 +39,7 @@ struct MapLayer
 	std::vector<int> tiles;
 
 	// L09: TODO 5: Define properties 
-	// ...
+	Properties properties;
 
 	// L07: TODO 6: Return the gid at tile (i, j)
 	unsigned int Get(int i, int j) const
@@ -127,5 +134,5 @@ private:
 	MapData mapData;
 
 	// L09: TODO 8: Create colliders from map metadata
-	// ... // The gid of the tile that represents a collider in the tileset
+	int colliderGid = 49; // The gid of the tile that represents a collider in the tileset
 };
