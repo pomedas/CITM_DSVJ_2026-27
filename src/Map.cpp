@@ -37,22 +37,26 @@ bool Map::PostUpdate()
 
 		// L07: TODO 5: Draw every tile in every layer
 		for (const auto& layer : mapData.layers) {
-			for (int i = 0; i < mapData.width; i++) {
-				for (int j = 0; j < mapData.height; j++) {
 
-					// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
-					// tile coordinates to world coordinates, then draw
-					int gid = layer.Get(i, j);
+			// L09: TODO 7: Implement a method to get the value of a custom property and check if the layer is visible before drawing
 
-					//L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
-					const TileSet& tileSet = mapData.tilesets.front();
+				for (int i = 0; i < mapData.width; i++) {
+					for (int j = 0; j < mapData.height; j++) {
 
-					SDL_Rect tileRect = tileSet.GetRect(gid);
-					Vector2D mapCoord = MapToWorld(i, j);
-					Engine::GetInstance().render->DrawTexture(tileSet.texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+						// L07: TODO 9: Get the gid, look up its rect in the tileset, convert
+						// tile coordinates to world coordinates, then draw
+						int gid = layer.Get(i, j);
 
+						//L09: TODO 3: Obtain the tile set using GetTilesetFromTileId
+						const TileSet* tileSet = &mapData.tilesets.front();
+
+						SDL_Rect tileRect = tileSet->GetRect(gid);
+						Vector2D mapCoord = MapToWorld(i, j);
+						Engine::GetInstance().render->DrawTexture(tileSet->texture, (int)mapCoord.getX(), (int)mapCoord.getY(), &tileRect);
+
+					}
 				}
-			}
+			
 		}
 	}
 
@@ -139,9 +143,9 @@ bool Map::Load(std::string path, std::string fileName)
 			layer.name = layerNode.attribute("name").as_string();
 			layer.width = layerNode.attribute("width").as_int();
 			layer.height = layerNode.attribute("height").as_int();
-			layer.visible = layerNode.attribute("visible").as_bool(true);
 
 			//L09: TODO 6 Call Load Layer Properties
+			// ...
 
 			pugi::xml_node dataNode = layerNode.child("data");
 			for (pugi::xml_node tileNode = dataNode.child("tile"); tileNode; tileNode = tileNode.next_sibling("tile"))
@@ -222,18 +226,19 @@ Vector2D Map::MapToWorld(int x, int y) const
 }
 
 // L09: TODO 2: Implement function to the Tileset based on a tile id
-TileSet* Map::GetTilesetFromTileId(int gid) const
+const TileSet* Map::GetTilesetFromTileId(int gid) const
 {
-	TileSet* set = nullptr;
-
-	return set;
+	// ..
+	return nullptr;
 }
 
 // L09: TODO 6: Load a group of properties from a node and fill a list with it
-bool Map::LoadProperties(pugi::xml_node& node, Properties& properties)
+bool Map::LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties)
 {
 	bool ret = true;
 
+	// ... Load properties from the layerNode into the properties object
+	
 	return ret;
 }
 

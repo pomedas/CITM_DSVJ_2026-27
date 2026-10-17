@@ -8,7 +8,7 @@
 
 struct SDL_Texture;
 
-// L09: TODO 5: Add attributes to the property structure
+// L09: TODO 5: Define properties struct
 struct Properties
 {
 	struct Property
@@ -16,7 +16,10 @@ struct Properties
 		// ...
 	};
 
+	// ...
+
 	// L09: TODO 7: Implement a method to get the value of a custom property
+	// ...
 };
 
 // L07: TODO 1: Create a struct to hold information for a single map layer
@@ -26,10 +29,9 @@ struct MapLayer
 	std::string name;
 	int width;
 	int height;
-	bool visible;   // native TMX attribute; hides helper layers like the collision mask
 	std::vector<int> tiles;
 
-	// L09: TODO 3: Custom properties read from this layer's <properties> node
+	// L09: TODO 5: Define properties 
 	// ...
 
 	// L07: TODO 6: Return the gid at tile (i, j)
@@ -109,10 +111,10 @@ public:
 	Vector2D MapToWorld(int i, int j) const;
 
 	// L09: TODO 2: Implement function to the Tileset based on a tile id
-	TileSet* GetTilesetFromTileId(int gid) const;
+	const TileSet* GetTilesetFromTileId(int gid) const;
 
 	// L09: TODO 6: Load a group of properties 
-	bool LoadProperties(pugi::xml_node& node, Properties& properties);
+	bool LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties);
 
 public:
 	std::string mapFileName;
@@ -123,4 +125,7 @@ private:
 
 	// L06: TODO 1: Declare a MapData member to hold the parsed map
 	MapData mapData;
+
+	// L09: TODO 8: Create colliders from map metadata
+	// ... // The gid of the tile that represents a collider in the tileset
 };
