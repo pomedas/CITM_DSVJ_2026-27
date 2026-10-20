@@ -37,7 +37,6 @@ bool EntityManager::CleanUp()
 
 	for (const auto& entity : entities)
 	{
-		if (entity->active == false) continue;
 		ret = ret && entity->CleanUp();
 	}
 

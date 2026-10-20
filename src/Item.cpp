@@ -48,14 +48,25 @@ bool Item::Draw()
 
 bool Item::CleanUp()
 {
-	Engine::GetInstance().textures->UnLoad(texture);
+	// Release the physics body first, then the texture
+	if (pbody != nullptr)
+	{
+		pbody->listener = nullptr;
+		Engine::GetInstance().physics->DeletePhysBody(pbody);
+		pbody = nullptr;
+	}
+
+	if (texture != nullptr)
+	{
+		Engine::GetInstance().textures->UnLoad(texture);
+		texture = nullptr;
+	}
 	return true;
 }
 
 bool Item::Destroy()
 {
 	LOG("Destroying item");
-	active = false;
 	pendingToDelete = true;
 	return true;
 }

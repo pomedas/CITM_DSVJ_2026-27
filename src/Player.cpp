@@ -82,7 +82,19 @@ bool Player::Draw()
 bool Player::CleanUp()
 {
 	LOG("Cleanup player");
-	Engine::GetInstance().textures->UnLoad(texture);
+	// Release the physics body first, then the texture
+	if (pbody != nullptr)
+	{
+		pbody->listener = nullptr;
+		Engine::GetInstance().physics->DeletePhysBody(pbody);
+		pbody = nullptr;
+	}
+
+	if (texture != nullptr)
+	{
+		Engine::GetInstance().textures->UnLoad(texture);
+		texture = nullptr;
+	}
 	return true;
 }
 
