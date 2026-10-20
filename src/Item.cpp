@@ -43,7 +43,8 @@ bool Item::Draw()
 
 bool Item::CleanUp()
 {
-	// L08: TODO 4: Release the physics body here before unloading the texture
+	//Release the physics body here before unloading the texture
+	
 	Engine::GetInstance().textures->UnLoad(texture);
 	return true;
 }

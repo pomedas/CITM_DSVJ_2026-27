@@ -69,7 +69,9 @@ bool Player::Draw()
 bool Player::CleanUp()
 {
 	LOG("Cleanup player");
-	// L08: TODO 5: Release the physics body here before unloading the texture
+
+	// Release the physics body here before unloading the texture
+
 	Engine::GetInstance().textures->UnLoad(texture);
 	return true;
 }
