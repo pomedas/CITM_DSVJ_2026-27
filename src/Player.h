@@ -35,7 +35,7 @@ public:
 	int texW, texH;
 
 	// L08: TODO 5: Add physics to the player - declare a Physics body
-	PhysBody* pbody;
+	PhysBody* pbody = nullptr;
 
 private:
 	b2Vec2 velocity;

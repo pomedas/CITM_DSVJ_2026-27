@@ -52,6 +52,7 @@ public:
 
 	virtual bool Destroy()
 	{
+		pendingToDelete = true;
 		return true;
 	}
 
