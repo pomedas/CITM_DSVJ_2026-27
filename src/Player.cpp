@@ -109,9 +109,15 @@ void Player::OnCollision(PhysBody* physA, PhysBody* physB)
 		LOG("Collision PLATFORM");
 		break;
 	case ColliderType::ITEM:
+		
+		//Play the coin pickup sound effect 
 		Engine::GetInstance().audio->PlayFx(pickCoinFxId);
-		//physB->listener->Destroy();
+
+		// Destroy the item. 
+		physB->listener->Destroy(); 
+
 		LOG("Collision ITEM");
+
 		break;
 	case ColliderType::UNKNOWN:
 		LOG("Collision UNKNOWN");
