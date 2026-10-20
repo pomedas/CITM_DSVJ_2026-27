@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include "Vector2D.h"
+#include "pugixml.hpp"
 
 // L08: TODO 2: Add Physics Module
 // Add forward declaration to avoid circular dependency
@@ -50,6 +51,12 @@ public:
 		return true;
 	}
 
+	// L10: TODO 4: Store this entity's slice of config.xml, mirroring
+	// Module::LoadParameters
+	virtual void SetParameters(pugi::xml_node p) {
+		parameters = p; 
+	}
+
 	virtual bool Destroy()
 	{
 		pendingToDelete = true;
@@ -92,4 +99,7 @@ public:
 	// want our Entity class, maybe it's not renderable...
 	Vector2D position;
 	bool renderable = true;
+
+	// L10: TODO 4: This entity's slice of config.xml, set via SetParameters()
+	pugi::xml_node parameters;
 };

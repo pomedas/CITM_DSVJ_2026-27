@@ -1,99 +1,113 @@
-# L09 — Map Collisions (Solution)
+# L10 — Animations and Parameters
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L09_Map_Collision`. Builds on
-`L08_Physics_Solution`. All the TODOs are filled in; this is what your engine
-should look like at the end of the lecture.
+Builds on `L09_Map_Collision_Solution`. The player gets an animated
+spritesheet, the camera follows the player, and the player's tuning comes from
+`config.xml` instead of being hardcoded. Check
+`L10_Animations_Parameters_Solution` once you're done, or if you get stuck.
 
 ## The idea
 
-L08 gave the player something to stand on with three hand-placed rectangles in
-`Map::Load()`, a placeholder. This lecture replaces it: **custom properties on
-Tiled layers** decide what is drawn and what is solid.
+Three things land in this lecture: the player has an animated spritesheet
+instead of a static frame, the camera follows the player instead of sitting
+still, and the player's tuning (texture, frame size, speed, sound) comes from
+`config.xml` — the same pattern `Module::LoadParameters` already taught for
+engine modules, now extended to entities.
 
-`MapTemplate.tmx` now has two layers and a second tileset:
+`Player`'s shape does not change: `Update()` does the logic and `Draw()` does
+the rendering. The animation clock and the camera follow go in `Update()`; the
+frame lookup goes in `Draw()`. Add the new work into the existing methods.
 
-- `Map` — the visible level, flagged `Draw = true`.
-- `Collisions` — painted with the `MapMetadata` tileset (`Assets/Maps/MapMetadata.png`).
-  Flagged `Collision = true` and `Draw = true`, so the collider tiles are
-  visible while you debug. Set `Draw` to `false` to hide them.
-
-`Map::PostUpdate()` draws a layer only if its `Draw` property is true.
-`Map::Load()` creates one static rectangle (`ctype = PLATFORM`) for every tile
-in a `Collision` layer whose gid is `colliderGid` (49, the first metadata
-tile). The three L08 hand-placed colliders are gone; the map covers the whole
-level.
+`Animation.h`/`.cpp` (clips, and loading them from a Tiled TSX) are given, not
+a TODO — you call them, like `Physics` at L08.
 
 ## What each TODO does
 
-The numbering starts at 2 and skips 4 on purpose: it matches the slides.
+The numbering starts at 4 on purpose: it matches the slides.
 
-| Marker | File | Answer |
+| Marker | File | What you write |
 |---|---|---|
-| `L09: TODO 2` | `src/Map.h`/`.cpp` | `Map::GetTilesetFromTileId()` returns the tileset whose range contains the gid, `nullptr` (with a `LOG`) otherwise |
-| `L09: TODO 3` | `src/Map.cpp` `PostUpdate()` | The draw loop skips empty tiles and uses `GetTilesetFromTileId(gid)` |
-| `L09: TODO 5` | `src/Map.h` | `Properties` holds a `std::vector<Property>` (`name`, `bool value`); `MapLayer` has a `Properties properties` member |
-| `L09: TODO 6` | `src/Map.h`/`.cpp` | `Map::LoadLayerProperties()` parses `<properties>`; `Load()` calls it per layer |
-| `L09: TODO 7` | `src/Map.h`, `src/Map.cpp` | `Properties::GetProperty()` returns `const Property*` or `nullptr`; `PostUpdate()` draws only layers with `Draw` true |
-| `L09: TODO 8` | `src/Map.h`/`.cpp` | `colliderGid` member, and the collider loop in `Load()` replacing the L08 placeholder |
+| `L10: TODO 4` | `src/Entity.h` | `Entity::SetParameters(pugi::xml_node)` and a `parameters` member — the `Module::LoadParameters` pattern for entities |
+| `L10: TODO 4` | `src/Scene.cpp` | In `Scene::Awake()`, call `player->SetParameters(...)` right after `CreateEntity()`, with the `<player>` node from `entityManager->configParameters` |
+| `L10: TODO 4` | `config.xml` | Fill in the `<player>` section: texture path, animations TSX path, frame width/height (speed and sound are already there) |
+| `L10: TODO 5` | `src/Player.cpp` `Start()` | Read the texture path, frame size and sound from `parameters` instead of hardcoding them; load the animations from the TSX and set `"idle"` as current |
+| `L10: TODO 5` | `src/Player.h` | Declare an `AnimationSet anims` |
+| `L10: TODO 6` | `src/Player.cpp` `Update()` | `anims.Update(dt)` — logic, so it lives in `Update()` |
+| `L10: TODO 6` | `src/Player.cpp` `Draw()` | `anims.GetCurrentFrame()` and pass it to `DrawTexture(...)` — rendering, so it lives in `Draw()` |
+| `L10: TODO 7` | `src/Player.cpp` `Update()` | `anims.SetCurrent(...)`: default to `"idle"`, switch to `"move"` while A/D is held |
+| `L10: TODO 8` | `src/Player.cpp` `Update()` | Horizontal-only camera follow, clamped to the map's edges |
+| `L10: TODO 8` | `src/Map.h`/`.cpp` | `Map::GetMapSizeInPixels()` — the map's size in pixels, used by the clamp |
 
-`Property::value` is a `bool` for now; widening it to strings and ints is
-left for when a feature needs it.
+`Entity::SetParameters()` plus the `parameters` member (TODO 4, `src/Entity.h`)
+and `Map::GetMapSizeInPixels()` (TODO 8, `src/Map.h`/`.cpp`) are already
+written and only marked: read them, they are what the TODOs above rely on.
 
-## Why `Properties` is `std::vector<Property>` by value, no destructor
+The animation TSX (`player2_spritesheet.tsx`) is not in this branch: in class
+you create it in Tiled with the tile animation editor (idle = tiles 0–10,
+move = tiles 11–21, jump = tiles 22–24, 50 ms per frame). The finished file is
+in the solution branch.
 
-`MapLayer` holds a `Properties` **by value**, and `MapData::layers` is a
-`std::vector<MapLayer>` (the L07 decision). If `Properties` owned a
-`std::list<Property*>` with a hand-written destructor and no copy/move
-constructor, the first time that vector reallocates the copied `Properties`
-and the original would both think they own the same `Property*` pointers, and
-the first one destroyed would double-delete them. `std::vector<Property>`
-needs no destructor at all, the same lesson `TileSet` taught at L06.
+Until the TODOs are done the game runs exactly as it did at the end of L09,
+except for the changes listed below.
 
-## Why `GetTilesetFromTileId()` matters even with one visible tileset
+## What changed besides the TODOs
 
-The obvious-looking implementation assigns the current tileset to the return
-value on every iteration and only then tests the range:
+- **Module order.** `entityManager` is now registered before `scene`. Module
+  parameters are loaded just before each module's `Awake()`, so this is what
+  makes `entityManager->configParameters` available when `Scene::Awake()` runs.
+  Registration order is also `Update()`/draw order: entities now update before
+  the scene does.
+- **Spawn.** The player starts at `(300, 300)`, clear of the left wall.
+- **Map.** `MapTemplate.tmx` has colliders on all the platforms, and the
+  `Collisions` layer is no longer drawn.
+- **Physics debug** starts off. Press **F1** to show the Box2D wireframes.
 
-```cpp
-const TileSet* set = nullptr;
-for (const auto& tileset : mapData.tilesets) {
-    set = &tileset;                         // wrong: assigned before testing
-    if (/* gid is in this tileset's range */) break;
-}
-return set;                                 // never nullptr
-```
+## Things to know
 
-A gid that belongs to no tileset falls out of the loop returning the *last*
-tileset, so the caller's null check is dead code and you draw garbage instead
-of catching the problem. **Return inside the `if`**, and `nullptr` after the
-loop. This map has two tilesets (the desert tiles and the 2-tile metadata
-tileset), so the lookup is already doing real work.
+- **Why `SetParameters()` works.** `CreateEntity()` returns a constructed but
+  not-yet-`Awake`'d entity that waits in `EntityManager`'s pending queue (L04).
+  That is the window in which you can hand it its data. Call it any later and
+  `Start()` would already have read an empty node.
+- **The spawn position stays in code.** It is map data, not player config; L15
+  loads it from a Tiled object layer. Animation clip names (`idle`, `move`,
+  `jump`) stay in code too: they describe the layout of the TSX, not a tunable.
+- **The camera is an `SDL_FRect`** since L01, so write a float straight into
+  `camera.x`. The follow is horizontal only, and the player sits at the quarter
+  mark of the screen so you see more of what is ahead.
+- **The arrow-key camera from L03 still exists** in `Scene::Update()`. It runs
+  after the follow, so holding Left/Right shifts the view by a few pixels
+  instead of scrolling it. Up/Down still move the camera vertically.
+- **`GetSize()` is not the answer for the frame size.** The texture is a
+  spritesheet, so it returns the whole sheet; the frame size comes from the
+  config.
+- **`dt` is in seconds**, and so are the animation frame durations.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move, **space**
-jumps. The player now collides with the map's walls and floor, not just the
-three old platforms. Press **F1** for the Box2D debug wireframes; every
-collider tile gets one.
+Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move and
+**F1** toggles the Box2D debug wireframes. After the TODOs the player walks
+instead of sliding as a static frame, and the camera scrolls once you walk far
+enough from the quarter-mark position.
 
 ## Read the code
 
-Start at the collider loop at the end of `Map::Load()`, then
-`Properties::GetProperty()` and `Map::LoadLayerProperties()` for where the
-`Collision` and `Draw` flags come from.
+Start at `Player::Start()`, then `Player::Update()` and `Player::Draw()`, where
+the TODO markers sit. `Animation::Update()` and `AnimationSet::LoadFromTSX()`
+in `src/Animation.cpp` hold the clip machinery.
 
 ## Homework
 
-- Compare this branch with `L09_Map_Collision`; the diff should be nothing but
-  TODO bodies plus the finished `MapTemplate.tmx`.
-- The loop still compares a gid (`colliderGid = 49`) as well as the layer flag.
-  What would you change in `Properties` to move that number into the map?
-- Add a third tileset in Tiled and confirm `GetTilesetFromTileId()` keeps
-  drawing correctly.
+- Compare this branch with `L10_Animations_Parameters_Solution` once you're
+  done; the diff should be only the TODO bodies and the TSX.
+- The `"jump"` clip is registered but the player cannot jump yet. Add a jump,
+  and switch to the clip when the jump starts and back on landing.
+- If the player TSX is missing, `LoadFromTSX()` logs and returns `false`,
+  leaving the player idle-only. Given L05's "hard-fail on bad config"
+  precedent, should that fail loudly?
 
 ## Reference
 
-- Tiled: custom properties — <https://doc.mapeditor.org/en/stable/manual/custom-properties/>
-- Tiled TMX format — <https://doc.mapeditor.org/en/stable/reference/tmx-map-format/>
+- Tiled: tile animations — <https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-animation-editor>
+- A1 spec: "Parameters loading — read configurations and entity parameters
+  from external files: Player parameters (initial position, speed, tiles)"

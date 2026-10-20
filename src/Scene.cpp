@@ -28,6 +28,9 @@ bool Scene::Awake()
 	// L04: TODO 3a: Instantiate the player through the entity manager
 	player = std::dynamic_pointer_cast<Player>(Engine::GetInstance().entityManager->CreateEntity(EntityType::PLAYER));
 
+	// L10: TODO 4: Hand the player its <player> config.xml section
+	// ..
+
 	// L08: TODO 4: Create an item through the entity manager
 	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
 	item->position = Vector2D(150, 200);

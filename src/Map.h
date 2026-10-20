@@ -123,6 +123,10 @@ public:
 	// L09: TODO 6: Load a group of properties 
 	bool LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties);
 
+	// L10: TODO 8: Return the map's total size in pixels (width/height in
+	// tiles times tile size) -- used to clamp the camera to the map's edges
+	Vector2D GetMapSizeInPixels();
+
 public:
 	std::string mapFileName;
 	std::string mapPath;

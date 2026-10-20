@@ -41,4 +41,7 @@ private:
 	b2Vec2 velocity;
 	// Audio fx
 	int pickCoinFxId;
+
+	// L10: TODO 5: Player's animation clips, loaded from a TSX in Start()
+	// ..
 };

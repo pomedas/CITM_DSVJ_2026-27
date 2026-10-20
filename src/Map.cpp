@@ -258,3 +258,12 @@ bool Map::LoadLayerProperties(pugi::xml_node& layerNode, Properties& properties)
 	return ret;
 }
 
+// L10: TODO 8: Return the map's total size in pixels (width/height in
+// tiles times tile size) -- used to clamp the camera to the map's edges
+Vector2D Map::GetMapSizeInPixels() {
+	Vector2D mapSize;
+	mapSize.setX((float)(mapData.width * mapData.tileWidth));
+	mapSize.setY((float)(mapData.height * mapData.tileHeight));
+	return mapSize;
+}
+
