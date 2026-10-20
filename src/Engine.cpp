@@ -49,10 +49,11 @@ Engine::Engine() {
     AddModule(std::static_pointer_cast<Module>(audio));
 
     AddModule(std::static_pointer_cast<Module>(map));
+
     // L04: TODO 1: Register the EntityManager module
     AddModule(std::static_pointer_cast<Module>(entityManager));
-
     AddModule(std::static_pointer_cast<Module>(scene));
+
     // L08: TODO 2: Add Physics Module
     // Register it right before render: registration order is draw order, and
     // Physics::PostUpdate() draws the F1 debug wireframes

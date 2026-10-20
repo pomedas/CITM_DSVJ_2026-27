@@ -17,15 +17,16 @@
     <fullscreen_window value="false"/>
   </window>
 
-  <!-- L10: TODO 4: Add paremeters to the <player> section: texture path, animations tsx path, movement speed, frame width/height -->
-  <entitymanager>
-    <player>
-	  <texture path=""/>
-	  <animations tsx=""/>
-	  <movement speed="4.0"/>
-	  <frame width="" height=""/>
-	  <audiofx path="Assets/Audio/Fx/coin-collision-sound-342335.wav"/>
-    </player>		
-  </entitymanager>
+  <!-- L10: TODO 4: Add a <player> section: texture path, animations tsx
+       path, movement speed, frame width/height -->
+	<entitymanager>
+		<player>
+			<texture path="Assets/Textures/player2_spritesheet.png"/>
+			<animations tsx="Assets/Textures/player2_spritesheet.tsx"/>
+			<movement speed="4.0"/>
+			<frame width="32" height="32"/>
+			<audiofx path="Assets/Audio/Fx/coin-collision-sound-342335.wav"/>
+		</player>		
+	</entitymanager>
 
 </config>

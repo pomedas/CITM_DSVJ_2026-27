@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include <SDL3/SDL.h>
 #include <box2d/box2d.h>
+#include "Animation.h"
 
 struct SDL_Texture;
 
@@ -43,5 +44,5 @@ private:
 	int pickCoinFxId;
 
 	// L10: TODO 5: Player's animation clips, loaded from a TSX in Start()
-	// ..
+	AnimationSet anims;
 };

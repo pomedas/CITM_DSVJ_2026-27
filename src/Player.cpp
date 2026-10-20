@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "Physics.h"
 #include "Audio.h"
+#include "Map.h"
 
 Player::Player() : Entity(EntityType::PLAYER)
 {
@@ -17,6 +18,9 @@ Player::~Player()
 
 bool Player::Awake()
 {
+	// L10: initial position stays in code (see the L10: TODO 4 config note) -- it's map data,
+	// not player config, and L15 loads it from the map instead. Away from
+	// the left wall (L09's Collisions layer).
 	// L04: TODO 2: Initialize the player's position
 	position = Vector2D(300.0f, 300.0f);
 	return true;
@@ -28,15 +32,16 @@ bool Player::Start()
 	// instead of hardcoding them. GetSize() is not the fix for texW/texH --
 	// the real texture (a spritesheet) would return the whole sheet's size,
 	// not one frame's.
-	// L04: TODO 2: Load the player texture
-	texture = Engine::GetInstance().textures->Load("Assets/Textures/player1.png");
-	Engine::GetInstance().textures->GetSize(texture, texW, texH);
+	texture = Engine::GetInstance().textures->Load(parameters.child("texture").attribute("path").as_string());
+	texW = parameters.child("frame").attribute("width").as_int();
+	texH = parameters.child("frame").attribute("height").as_int();
 
 	// L10: TODO 5: Load this entity's animations from a TSX and set the current animation to "idle".
-	// ...
+	anims.LoadFromTSX(parameters.child("animations").attribute("tsx").as_string(), { {0, "idle"}, {11, "move"}, {22, "jump"} });
+	anims.SetCurrent("idle");
 
 	// Initialize audio effect
-	pickCoinFxId = Engine::GetInstance().audio->LoadFx("Assets/Audio/Fx/coin-collision-sound-342335.wav");
+	pickCoinFxId = Engine::GetInstance().audio->LoadFx(parameters.child("audiofx").attribute("path").as_string());
 
 	// L08: TODO 5: Add physics to the player - create the physics body: a CAPSULE (CreateCapsule) with fixed rotation, so the player does not roll
 	pbody = Engine::GetInstance().physics->CreateCircle((int)position.getX() + texW / 2, (int)position.getY() + texH / 2, texW / 2, bodyType::DYNAMIC);
@@ -58,18 +63,18 @@ bool Player::Update(float dt)
 	velocity = { 0, velocity.y }; // Reset horizontal velocity by default, this way the player stops when no key is pressed
 
 	// L10: TODO 7: Default to the "idle" animation; a key below overrides it
-	// ..
+	anims.SetCurrent("idle");
 
 	// Move left/right
 	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_A) == KEY_REPEAT) {
 		velocity.x = -speed;
 		// L10: TODO 7: Switch to the "move" animation
-		// ..
+		anims.SetCurrent("move");
 	}
 	if (Engine::GetInstance().input->GetKey(SDL_SCANCODE_D) == KEY_REPEAT) {
 		velocity.x = speed;
 		// L10: TODO 7: Switch to the "move" animation
-		// ..
+		anims.SetCurrent("move");
 	}
 
 	// Apply velocity via helper
@@ -81,10 +86,17 @@ bool Player::Update(float dt)
 	position.setY((float)y);
 
 	// L10: TODO 8: Camera follow
-	// ..
+	Vector2D mapSize = Engine::GetInstance().map->GetMapSizeInPixels();
+	float camW = Engine::GetInstance().render->camera.w;
+	float limitLeft = camW / 4.0f;
+	float limitRight = mapSize.getX() - camW * 3.0f / 4.0f;
 
-	// L10: TODO 6: Advance the animation frame
-	// ..
+	if (position.getX() > limitLeft && position.getX() < limitRight) {
+		Engine::GetInstance().render->camera.x = camW / 4.0f - position.getX();
+	}
+
+	// L10: TODO 6: Advance the animation clock -- logic, so it belongs in Update(), not Draw()
+	anims.Update(dt);
 
 	return true;
 }
@@ -95,8 +107,8 @@ bool Player::Draw()
 	// L04: TODO 4: Render the player texture at its current position
 
 	// L10: TODO 6: Draw the current animation frame instead of the whole spritesheet
-	// ..
-	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX() - texW / 2, (int)position.getY() - texH / 2);
+	SDL_Rect currentFrame = anims.GetCurrentFrame();
+	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX() - texW / 2, (int)position.getY() - texH / 2, &currentFrame);
 
 	return true;
 }
