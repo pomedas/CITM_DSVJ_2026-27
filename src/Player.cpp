@@ -94,7 +94,6 @@ bool Player::Update(float dt)
 	if (position.getX() > limitLeft && position.getX() < limitRight) {
 		Engine::GetInstance().render->camera.x = camW / 4.0f - position.getX();
 	}
-	Engine::GetInstance().render->camera.y = - position.getY()-32; // No vertical camera movement
 
 	// L10: TODO 6: Advance the animation clock -- logic, so it belongs in Update(), not Draw()
 	anims.Update(dt);
