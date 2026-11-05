@@ -120,6 +120,20 @@ bool Pathfinding::IsWalkable(int x, int y) {
 
     // L11: TODO 3: return true only if x and y are within map limits
     // and the tile is walkable (not blocked)
+    if(layerNav != nullptr) {
+
+		//Check map limits
+        if (x >= 0 && x < map->GetMapSizeInTiles().getX() &&
+            y >= 0 && y < map->GetMapSizeInTiles().getY()) {
+			//Get the gid of the tile
+            int gid = layerNav->Get(x, y);
+
+			//Check if the gid is different from the blocked gid
+            if (gid != blockedGid) {
+                isWalkable = true;
+            }
+        }
+	}
 
     return isWalkable;
 }
@@ -127,8 +141,46 @@ bool Pathfinding::IsWalkable(int x, int y) {
 void Pathfinding::PropagateBFS() {
 
     // L11 TODO 4: Check if we have reach a destination
+    bool foundDestination = false;
+    if (!frontier.empty()) {
+        Vector2D frontierTile = frontier.front();
+		Vector2D playerPos = Engine::GetInstance().scene->GetPlayerPosition();
+        Vector2D playerPosTile = Engine::GetInstance().map->WorldToMap((int)playerPos.getX(), (int)playerPos.getY());
+
+        if (frontierTile == playerPosTile) {
+            foundDestination = true;
+        }
+    }
 
     // L11: TODO 1: If frontier queue contains elements pop the first element and find the neighbors
+    if (!frontier.empty() && !foundDestination) {
+        //Get the value of the firt element in the queue
+        Vector2D frontierTile = frontier.front();
+        //remove the first element from the queue
+        frontier.pop();
+		//Get the neighbors (4 directions)
+		std::list<Vector2D> neighbors;
+        if (IsWalkable((int)frontierTile.getX() + 1, (int)frontierTile.getY())) {
+            neighbors.push_back(Vector2D(frontierTile.getX() + 1, frontierTile.getY()));
+        }
+        if (IsWalkable((int)frontierTile.getX(), (int)frontierTile.getY() + 1)) {
+            neighbors.push_back(Vector2D(frontierTile.getX(), frontierTile.getY() + 1));
+        }
+        if (IsWalkable((int)frontierTile.getX() - 1, (int)frontierTile.getY())) {
+            neighbors.push_back(Vector2D(frontierTile.getX() - 1, frontierTile.getY()));
+        }
+        if (IsWalkable((int)frontierTile.getX(), (int)frontierTile.getY() - 1)) {
+            neighbors.push_back(Vector2D(frontierTile.getX(), frontierTile.getY() - 1));
+        }
 
         // L11: TODO 2: For each neighbor, if not visited, add it to the frontier queue and visited list
+        for (const auto& neighbor : neighbors) {
+
+            if (!visited[(int)neighbor.getX()][(int)neighbor.getY()]) {
+                visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;
+                frontier.push(neighbor);
+            }
+        }
+
+    }
 }
