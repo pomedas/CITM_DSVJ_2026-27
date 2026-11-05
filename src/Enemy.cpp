@@ -43,6 +43,15 @@ bool Enemy::Start() {
 	//ssign collider type
 	pbody->ctype = ColliderType::ENEMY;
 
+	// Initialize pathfinding
+	pathfinding = std::make_shared<Pathfinding>();
+	//Get the position of the enemy
+	Vector2D pos = GetPosition();
+	//Convert to tile coordinates
+	Vector2D tilePos = Engine::GetInstance().map->WorldToMap((int)pos.getX(), (int)pos.getY()+1);
+	//Reset pathfinding
+	pathfinding->ResetPath(tilePos);
+
 	return true;
 }
 
@@ -57,6 +66,8 @@ bool Enemy::Update(float dt)
 	// Advance the animation
 	anims.Update(dt);
 
+	PerformPathfinding();
+
 	return true;
 }
 
@@ -65,10 +76,38 @@ bool Enemy::Draw()
 	SDL_Rect currentFrame = anims.GetCurrentFrame();
 	Engine::GetInstance().render->DrawTexture(texture, (int)position.getX() - texW / 2, (int)position.getY() - texH / 2, &currentFrame);
 
+	// L11: Draw pathfinding
+	pathfinding->DrawPath();
 
 	return true;
 }
 
+void Enemy::PerformPathfinding() {
+
+	// Pathfinding testing inputs
+
+	// Reset pathfinding with R key
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_R) == KEY_DOWN) {
+		//Get the position of the enemy
+		Vector2D pos = GetPosition();
+		//Convert to tile coordinates
+		Vector2D tilePos = Engine::GetInstance().map.get()->WorldToMap((int)pos.getX(), (int)pos.getY()+1);
+		//Reset pathfinding
+		pathfinding->ResetPath(tilePos);
+	}
+
+	// Propagate BFS with J key
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_J) == KEY_DOWN) {
+		pathfinding->PropagateBFS();
+	}
+
+	// Propagate BFS continuously with LShift + J
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_J) == KEY_REPEAT &&
+		Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT) {
+		pathfinding->PropagateBFS();
+	}
+
+}
 
 bool Enemy::CleanUp()
 {
