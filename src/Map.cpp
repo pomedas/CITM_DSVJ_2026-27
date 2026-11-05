@@ -231,6 +231,16 @@ Vector2D Map::MapToWorld(int x, int y) const
 	return ret;
 }
 
+// L11
+Vector2D Map::WorldToMap(int x, int y) {
+
+	Vector2D ret(0, 0);
+	ret.setX((float) x / (float) mapData.tileWidth);
+	ret.setY((float) y / (float) mapData.tileHeight);
+
+	return ret;
+}
+
 // L09: TODO 2: Implement function to the Tileset based on a tile id
 const TileSet* Map::GetTilesetFromTileId(int gid) const
 {
@@ -265,5 +275,35 @@ Vector2D Map::GetMapSizeInPixels() {
 	mapSize.setX((float)(mapData.width * mapData.tileWidth));
 	mapSize.setY((float)(mapData.height * mapData.tileHeight));
 	return mapSize;
+}
+
+// L11
+Vector2D Map::GetMapSizeInTiles()
+{
+	return Vector2D((float)mapData.width, (float)mapData.height);
+}
+
+// L11
+int Map::GetTileWidth() const
+{
+	return mapData.tileWidth;
+}
+
+// L11
+int Map::GetTileHeight() const
+{
+	return mapData.tileHeight;
+}
+
+// L11 Method to get the navigation layer from the map
+const MapLayer* Map::GetNavigationLayer() const {
+	for (const auto& layer : mapData.layers) {
+		if (layer.properties.GetProperty("Navigation") != NULL &&
+			layer.properties.GetProperty("Navigation")->value) {
+			return &layer;
+		}
+	}
+
+	return nullptr;
 }
 
