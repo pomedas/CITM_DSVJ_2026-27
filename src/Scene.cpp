@@ -9,6 +9,7 @@
 #include "Entity.h"
 #include "Item.h"
 #include "Map.h"
+#include "Enemy.h"
 
 Scene::Scene() : Module()
 {
@@ -34,6 +35,7 @@ bool Scene::Awake()
 	// L08: TODO 4: Create an item through the entity manager
 	std::shared_ptr<Item> item = std::dynamic_pointer_cast<Item>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ITEM));
 	item->position = Vector2D(150, 200);
+
 	return ret;
 }
 
@@ -44,6 +46,11 @@ bool Scene::Start()
 
 	// L06: TODO 7: Load the map through the map module
 	Engine::GetInstance().map->Load("Assets/Maps/", "MapTemplate.tmx");
+
+	// L11
+	enemy = std::dynamic_pointer_cast<Enemy>(Engine::GetInstance().entityManager->CreateEntity(EntityType::ENEMY));
+	enemy->SetParameters(Engine::GetInstance().entityManager->configParameters.child("enemy"));
+	enemy->position = Vector2D(700, 500);
 
 	return true;
 }
@@ -95,4 +102,10 @@ bool Scene::CleanUp()
 	LOG("Freeing scene");
 
 	return true;
+}
+
+// L11 Return the player position
+Vector2D Scene::GetPlayerPosition()
+{
+	return player->GetPosition();
 }
