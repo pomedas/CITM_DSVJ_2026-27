@@ -4,6 +4,7 @@
 #include "Map.h"
 #include "Render.h"
 #include "Scene.h"
+#include "Log.h"
 
 Pathfinding::Pathfinding() {
     
@@ -11,6 +12,10 @@ Pathfinding::Pathfinding() {
     pathTex = Engine::GetInstance().textures.get()->Load("Assets/Maps/MapMetadata.png");
     map = Engine::GetInstance().map.get();
     layerNav = map->GetNavigationLayer();
+
+    //Creates a vector of the size of the navigation grid
+    Vector2D mapSize = map->GetMapSizeInTiles();
+    visited = std::vector<std::vector<bool>>((int)mapSize.getX(), std::vector<bool>((int)mapSize.getY(), false));
 }
 
 Pathfinding::~Pathfinding() {
@@ -24,11 +29,18 @@ void Pathfinding::ResetPath(Vector2D pos) {
     while (!frontier.empty()) {
         frontier.pop();
     }
-    //Clear the visited list
-    visited.clear();
 
+    //Clear the visited list
+    Vector2D mapSize = map->GetMapSizeInTiles();
+    for (int i = 0; i < mapSize.getX(); i++){
+        for (int j = 0; j < mapSize.getY(); j++) {
+            visited[i][j] = false;
+        }
+    }
+
+	// Add the starting position to the queue and mark it as visited
+    visited[(int)pos.getX()][(int)pos.getY()] = true;
     frontier.push(pos);
-    visited.push_back(pos);
 }
 
 void Pathfinding::DrawPath() {
@@ -37,11 +49,20 @@ void Pathfinding::DrawPath() {
 	Map* map = Engine::GetInstance().map.get();
 
     // Draw visited
-    for (const auto& pathTile : visited) {
-    	Vector2D pathTileWorld = Engine::GetInstance().map.get()->MapToWorld((int)pathTile.getX(), (int)pathTile.getY());
-		// we use the second tile in the tileset to draw the visited. That's why we use rect x=33
-        SDL_Rect rect = { 33,1,map->GetTileWidth(),map->GetTileHeight()};
-        Engine::GetInstance().render->DrawTexture(pathTex, (int)pathTileWorld.getX(), (int)pathTileWorld.getY(),&rect);
+    Vector2D mapSize = map->GetMapSizeInTiles();
+    for (int i = 0; i < mapSize.getX(); i++){
+        for (int j = 0; j < mapSize.getY(); j++) {
+            if (visited[i][j]) {
+                Vector2D pathTileWorld = Engine::GetInstance().map.get()->MapToWorld(i, j);
+
+                // we use the second tile in the tileset to draw the visited. That's why we displace the size of 1 tile in the x axis of the rect and 1 piixel spacing 
+                int posInTileSetX = map->GetTileWidth() + 1;
+                int posInTileSetY = 1;
+
+                SDL_Rect rect = { posInTileSetX,posInTileSetY,map->GetTileWidth(),map->GetTileHeight() };
+                Engine::GetInstance().render->DrawTexture(pathTex, (int)pathTileWorld.getX(), (int)pathTileWorld.getY(), &rect);
+            }
+        }
     }
 
     // Draw frontier
@@ -56,9 +77,19 @@ void Pathfinding::DrawPath() {
         Vector2D frontierTile = frontierCopy.front();
         //Get the position of the frontier tile in the world
         Vector2D pos = Engine::GetInstance().map.get()->MapToWorld((int)frontierTile.getX(), (int)frontierTile.getY());
-		//Draw the frontier tile. We use the first tile in the tileset to draw the frontier. That's why we use rect x=1
-        SDL_Rect rect = { 1,1,map->GetTileWidth(),map->GetTileHeight() };
+
+		//Draw the frontier tile. We use the first tile in the tileset to draw the frontier. 
+        int posInTileSetX = 1;
+        int posInTileSetY = 1;
+        SDL_Rect rect = { posInTileSetX,posInTileSetY,map->GetTileWidth(),map->GetTileHeight() };
         Engine::GetInstance().render->DrawTexture(pathTex, (int)pos.getX(), (int)pos.getY(), &rect);
+
+		//Draw additional tile in frontier if it is the player position.
+        Vector2D playerPos = Engine::GetInstance().scene->GetPlayerPosition();
+        Vector2D playerPosTile = Engine::GetInstance().map->WorldToMap((int)playerPos.getX(), (int)playerPos.getY());
+        if (frontierTile == playerPosTile) {
+            Engine::GetInstance().render->DrawTexture(pathTex, (int)pos.getX(), (int)pos.getY(), &rect);
+        }
 
         //Remove the front element from the queue
         frontierCopy.pop();
@@ -128,18 +159,9 @@ void Pathfinding::PropagateBFS() {
         // L11: TODO 2: For each neighbor, if not visited, add it to the frontier queue and visited list
         for (const auto& neighbor : neighbors) {
 
-			//Check if the neighbor has been visited
-			bool isVisited = false;
-            for(const auto& visitedTile : visited) {
-                if(visitedTile == neighbor) {
-                    isVisited = true;
-                    break;
-				}
-			}
-			//If not visited add it to the frontier and visited list
-            if (!isVisited) {
+            if (!visited[(int)neighbor.getX()][(int)neighbor.getY()]) {
+                visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;
                 frontier.push(neighbor);
-                visited.push_back(neighbor);
             }
         }
 

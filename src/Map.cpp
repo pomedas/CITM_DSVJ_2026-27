@@ -235,8 +235,8 @@ Vector2D Map::MapToWorld(int x, int y) const
 Vector2D Map::WorldToMap(int x, int y) {
 
 	Vector2D ret(0, 0);
-	ret.setX((float) x / (float) mapData.tileWidth);
-	ret.setY((float) y / (float) mapData.tileHeight);
+	ret.setX((float)( x / mapData.tileWidth));
+	ret.setY((float)( y / mapData.tileHeight));
 
 	return ret;
 }

@@ -26,7 +26,7 @@ public:
     Map* map;
     const MapLayer* layerNav;
     std::queue<Vector2D> frontier;
-    std::list<Vector2D> visited;
+    std::vector<std::vector<bool>> visited;   // visited[x][y]
     SDL_Texture* pathTex = nullptr;
     Vector2D destination;
 
