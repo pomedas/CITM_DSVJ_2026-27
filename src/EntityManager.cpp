@@ -5,6 +5,7 @@
 #include "Textures.h"
 #include "Scene.h"
 #include "Log.h"
+#include "Enemy.h"
 
 EntityManager::EntityManager() : Module()
 {
@@ -59,6 +60,9 @@ std::shared_ptr<Entity> EntityManager::CreateEntity(EntityType type)
 		break;
 	case EntityType::ITEM:
 		entity = std::make_shared<Item>();
+		break;
+	case EntityType::ENEMY:
+		entity = std::make_shared<Enemy>();
 		break;
 	default:
 		LOG("Error in EntityManager::CreateEntity: Unknown entity type");

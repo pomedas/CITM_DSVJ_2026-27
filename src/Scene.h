@@ -4,6 +4,7 @@
 #include <memory>
 
 class Player;
+class Enemy;
 
 class Scene : public Module
 {
@@ -32,7 +33,13 @@ public:
 	// Called before quitting
 	bool CleanUp();
 
+	// L11 Return the player position
+	Vector2D GetPlayerPosition();
+
 private:
 	// L04: TODO 3a: Declare a player as a member of Scene.h
 	std::shared_ptr<Player> player;
+
+	// L11: 
+	std::shared_ptr<Enemy> enemy;
 };

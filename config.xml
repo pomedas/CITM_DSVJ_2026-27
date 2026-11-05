@@ -27,6 +27,13 @@
 			<frame width="32" height="32"/>
 			<audiofx path="Assets/Audio/Fx/coin-collision-sound-342335.wav"/>
 		</player>		
+		<!-- L11: the enemy's texture, animations, tuning and frame size -->
+		<enemy>
+			<texture path="Assets/Textures/enemy_spritesheet.png"/>
+			<animations tsx="Assets/Textures/enemy_spritesheet.tsx"/>
+			<movement speed="2.0"/>
+			<frame width="32" height="32"/>
+		</enemy>
 	</entitymanager>
 
 </config>

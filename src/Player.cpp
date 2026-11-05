@@ -160,3 +160,11 @@ void Player::OnCollision(PhysBody* physA, PhysBody* physB)
 		break;
 	}
 }
+
+// L11
+Vector2D Player::GetPosition() {
+	int x, y;
+	pbody->GetPosition(x, y);
+	// Adjust for center
+	return Vector2D((float)x - texW / 2, (float)y - texH / 2);
+}
