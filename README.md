@@ -1,11 +1,10 @@
-# L11 — Pathfinding: BFS
+# L11 — Pathfinding: BFS (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-First lecture of part 2. Builds on `L10_Animations_Parameters_Solution`. An
-enemy appears in the level and runs a breadth-first search from its own tile
-towards the player's, drawn on screen tile by tile so you can watch it spread.
-Check `L11_Pathfinding_BFS_Solution` once you're done, or if you get stuck.
+The completed version of `L11_Pathfinding_BFS`. Builds on
+`L10_Animations_Parameters_Solution`. All four TODOs are filled in: a
+breadth-first search spreads from the enemy's tile and stops on the player's.
 
 ## The idea
 
@@ -16,9 +15,8 @@ object and nothing else in the engine touches it.
 its own, so there is nothing for an `Update()` to do. The enemy creates it in
 `Start()` and calls into it from `Update()` and `Draw()`.
 
-The search is **stepped**, not run to completion: one call to `PropagateBFS()`
-expands exactly one tile. That is what makes the debug keys useful — you press
-**J** and see the next ring appear.
+The search is **stepped**: one call to `PropagateBFS()` expands exactly one
+tile, which is what makes the debug keys in `Enemy::PerformPathfinding()` work.
 
 | Key | What it does |
 |---|---|
@@ -26,93 +24,141 @@ expands exactly one tile. That is what makes the debug keys useful — you press
 | **J** | one expansion |
 | **Shift + J** | expand continuously |
 
-The enemy does **not move** in this lecture. It exists so the search has a
-start tile and something to look at. Movement arrives at L14.
+The enemy does not move in this lecture. Movement arrives at L14.
 
 ## Where the walkable data comes from
 
-`MapTemplate.tmx` has a new layer, `Navigation`, with the custom properties
-`Draw = false` and `Navigation = true`. `Map::GetNavigationLayer()` finds it by
-that property, so the layer's position and id don't matter.
+`MapTemplate.tmx` has a layer named `Navigation` with the custom properties
+`Draw = false` and `Navigation = true`. `Map::GetNavigationLayer()` walks the
+layers and returns the first one carrying that property, so the layer's id and
+position in the file don't matter.
 
-Blocked tiles are painted on it with the first tile of the `MapMetadata`
-tileset, whose `firstgid` is **49** — hence `blockedGid = 49` in
-`Pathfinding.h`. If you paint with a different tile, or your tilesets load in a
-different order, that number changes: check the `firstgid` in your own TMX.
+Blocked tiles are painted with the first tile of the `MapMetadata` tileset,
+whose `firstgid` is **49** — hence `blockedGid = 49`. That number is a fact
+about *this* TMX: a different blocking tile, or tilesets loaded in a different
+order, changes it.
 
 ## What each TODO does
 
-| Marker | File | What you write |
+| Marker | File | Answer |
 |---|---|---|
-| `L11: TODO 1` | `src/Pathfinding.cpp` `PropagateBFS()` | If the frontier is not empty, take its front tile, pop it, and collect its four walkable neighbours |
-| `L11: TODO 2` | `src/Pathfinding.cpp` `PropagateBFS()` | For each neighbour not yet visited: mark it visited **and** push it to the frontier |
-| `L11: TODO 3` | `src/Pathfinding.cpp` `IsWalkable()` | `true` only if `x`/`y` are inside the map **and** the tile on the navigation layer is not `blockedGid` |
-| `L11: TODO 4` | `src/Pathfinding.cpp` `PropagateBFS()` | Stop expanding once the tile at the front of the frontier is the player's tile |
+| `L11: TODO 1` | `src/Pathfinding.cpp` `PropagateBFS()` | `frontier.front()` + `frontier.pop()`, then the four neighbours filtered through `IsWalkable()` into a local `std::list<Vector2D>` |
+| `L11: TODO 2` | `src/Pathfinding.cpp` `PropagateBFS()` | For each neighbour: `if (!visited[x][y]) { visited[x][y] = true; frontier.push(neighbor); }` |
+| `L11: TODO 3` | `src/Pathfinding.cpp` `IsWalkable()` | `layerNav != nullptr`, then bounds against `GetMapSizeInTiles()`, then `layerNav->Get(x, y) != blockedGid` |
+| `L11: TODO 4` | `src/Pathfinding.cpp` `PropagateBFS()` | Peek at `frontier.front()`, convert the player's position with `WorldToMap()`, and set `foundDestination` if they are the same tile |
 
-Do them in the order **3 → 1 → 2 → 4**: nothing works until `IsWalkable()`
-does, and the destination check is easiest to add once you can see the search
-spread.
+Given, not written by students: the whole of `Enemy`, `Pathfinding`'s
+constructor / `ResetPath()` / `DrawPath()` / `CleanUp()`, the four new `Map`
+accessors, `Scene::GetPlayerPosition()`, `Player::GetPosition()`,
+`Vector2D::operator==`, the `<enemy>` section of `config.xml` and the
+`Navigation` layer in the TMX.
 
-Given, not a TODO — read them, the TODOs above rely on them:
+## Why `visited` is marked when pushing, not when popping
 
-- `src/Enemy.h`/`.cpp` — the whole entity, in the same shape as the L10
-  player: parameters from `config.xml`, a physics body, `Update(dt)` for logic,
-  `Draw()` for rendering.
-- `Pathfinding`'s constructor, `ResetPath()`, `DrawPath()` and `CleanUp()`.
-- `Map::WorldToMap()`, `GetMapSizeInTiles()`, `GetTileWidth()/GetTileHeight()`
-  and `GetNavigationLayer()`.
-- `Scene::GetPlayerPosition()`, `Player::GetPosition()` and
-  `Vector2D::operator==`.
-- The `<enemy>` section of `config.xml` and the `Navigation` layer in the TMX.
+```cpp
+for (const auto& neighbor : neighbors) {
+    if (!visited[(int)neighbor.getX()][(int)neighbor.getY()]) {
+        visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;   // at discovery
+        frontier.push(neighbor);
+    }
+}
+```
 
-## Things to know
+Marking at pop produces the same *set* of visited tiles and a quietly wrong
+queue: in the window between a tile being discovered and being expanded, its
+other neighbours discover it again and push it a second and third time. On an
+open map that is several times the work for an identical result, and it is the
+kind of bug that never shows up as a wrong answer — only as a slow one. This is
+the point worth making on the board.
 
-- **Mark visited when you push, not when you pop.** Marking at pop looks
-  equivalent and is not: between a tile being discovered and being expanded,
-  its other neighbours can discover it again, and it enters the queue several
-  times. Mark it the moment you push it.
-- **`visited` is a matrix, `visited[x][y]`**, sized once in the constructor
-  from `Map::GetMapSizeInTiles()` and cleared in `ResetPath()`. Never resize it
-  during a search, and index it `[x][y]`, not `[y][x]`.
-- **`frontier` is a `std::queue`.** FIFO is the whole of BFS: it is what makes
-  the search spread as even rings instead of running down one corridor.
-- **The destination is read, not stored.** `PropagateBFS()` asks
-  `Scene::GetPlayerPosition()` where the player is and converts it with
-  `Map::WorldToMap()`, so moving the player and pressing **R** restarts towards
-  the new tile.
-- **The search answers "which tiles did I reach", not "how do I get there".**
-  There is no path to walk yet — reconstructing one needs a parent per tile,
-  which arrives at L12.
-- **The enemy's start tile is taken one pixel below its position**
-  (`WorldToMap(x, y + 1)`), so it lands on the tile it is standing on rather
-  than the one its feet touch the edge of.
+## Why `visited` is a matrix and not a list
+
+`std::vector<std::vector<bool>> visited`, indexed `visited[x][y]`, is sized
+once in the constructor from `Map::GetMapSizeInTiles()` and cleared in place by
+`ResetPath()`. Nothing allocates during a search.
+
+The alternative — a `std::list<Vector2D>` of visited tiles, searched linearly —
+costs a scan of the whole list for every neighbour of every expansion, and, more
+importantly, has nowhere to put *per-tile* data. L12 needs a parent and a cost
+for each tile; a grid has a slot for them already, a list does not. Paying the
+layout cost now is why L12 is an addition rather than a rewrite.
+
+## Why the destination check comes before the pop
+
+```cpp
+bool foundDestination = false;
+if (!frontier.empty()) {
+    Vector2D frontierTile = frontier.front();
+    ...
+    if (frontierTile == playerPosTile) foundDestination = true;
+}
+
+if (!frontier.empty() && !foundDestination) { /* expand */ }
+```
+
+The check peeks at the tile that is *about* to be expanded and leaves it in the
+queue, so the search stops with the goal tile still visible in the frontier and
+`DrawPath()` can highlight it. Popping first and then testing would reach the
+same conclusion one expansion later and leave nothing to point at.
+
+The destination is read fresh every call from `Scene::GetPlayerPosition()`
+rather than stored at `ResetPath()` time: move the player, press **R**, and the
+search aims at the new tile with no extra state.
+
+## Why `Pathfinding` is a plain class owned by the enemy
+
+It has no `Update()` to run. A Module that does not tick teaches the wrong
+thing about what a Module is for, and `Map` — which already parses the TMX,
+draws it, builds its colliders and answers queries about it — does not need a
+fifth responsibility.
+
+The cost of one instance per enemy is that each enemy carries its own
+`visited` grid and repeats the same search; with one enemy that is invisible,
+and L14 is where it starts to matter. The texture is shared through
+`Textures::Load()`, and `Enemy::CleanUp()` calls `Pathfinding::CleanUp()` so
+the debug texture is released with the entity that loaded it.
+
+## Other changes in this lecture
+
+- **`EntityType::ENEMY`** and its case in `EntityManager::CreateEntity()`.
+  `ColliderType::ENEMY` already existed since L08.
+- **`Map::WorldToMap()`** — the inverse of L07's `MapToWorld()`. It floors
+  rather than truncating, so a negative world coordinate maps to a negative
+  tile and the bounds check in `IsWalkable()` rejects it instead of accepting
+  tile 0.
+- **`Vector2D::operator==`** — needed to compare tile coordinates.
+- **`Player::GetPosition()`** returns the body's position corrected to the
+  sprite's top-left, so the player's tile matches the tile they look like they
+  are standing on.
+- **The enemy's start tile** is `WorldToMap(x, y + 1)`: one pixel down, so it
+  resolves to the tile the enemy stands on rather than the boundary above it.
 
 ## Build
 
 Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move the
-player, **F1** toggles the Box2D debug wireframes. Before the TODOs the enemy
-is drawn and nothing else happens when you press **J**; after them, **Shift+J**
-should flood the walkable part of the level and stop when it reaches the tile
-the player is standing on.
+player, **F1** toggles the Box2D debug wireframes, **R** / **J** / **Shift+J**
+drive the search. Holding **Shift+J** should flood the walkable part of the
+level in rings and stop at the tile the player is standing on; the expansion
+should never cross a painted navigation tile and never leave the map.
 
 ## Read the code
 
-Start at `Enemy::Start()` to see where the `Pathfinding` object comes from and
-how the first `ResetPath()` is called, then `Enemy::PerformPathfinding()` for
-the debug keys. Then `Pathfinding::ResetPath()` and `DrawPath()`, so you know
-the state the TODOs are working on before you write them.
+`Enemy::Start()` for where the `Pathfinding` object and the first `ResetPath()`
+come from, then `Pathfinding::PropagateBFS()` — the whole algorithm is fifteen
+lines. `DrawPath()` after that, for how the visited grid and the frontier queue
+become two different tiles from `MapMetadata.png`.
 
 ## Homework
 
-- Compare this branch with `L11_Pathfinding_BFS_Solution` once you're done; the
-  diff should be only the TODO bodies.
-- Paint a fully enclosed pocket on the `Navigation` layer and start the enemy
-  outside it. What does the search do when it can never reach the player?
-- `frontier` is a queue. What does the search look like if you make it a stack
-  instead, and why would you not want that here?
-- `DrawPath()` draws every visited tile every frame. On a 64×24 map that is
-  cheap; at what map size does it stop being cheap, and what would you draw
-  instead?
+- Compare this branch against `L11_Pathfinding_BFS` — the diff should be the
+  TODO bodies and nothing else.
+- Paint an enclosed pocket on the `Navigation` layer and start the enemy
+  outside it: the search ends with an empty frontier and no goal. What should
+  the enemy do with that answer?
+- BFS treats every step as costing the same. Sketch a map where that gives a
+  path you would not want an enemy to take — that map is L12's reason to exist.
+- The search is restarted by hand with **R**. What should trigger a restart
+  once the enemy actually walks (L14), and how often?
 
 ## Reference
 
