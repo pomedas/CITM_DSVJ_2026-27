@@ -117,6 +117,9 @@ public:
 	// L07: TODO 8: Translate tile coordinates (i, j) into world (pixel) coordinates
 	Vector2D MapToWorld(int i, int j) const;
 
+	// L11
+	Vector2D WorldToMap(int x, int y) const;
+
 	// L09: TODO 2: Implement function to the Tileset based on a tile id
 	const TileSet* GetTilesetFromTileId(int gid) const;
 
@@ -126,6 +129,16 @@ public:
 	// L10: TODO 8: Return the map's total size in pixels (width/height in
 	// tiles times tile size) -- used to clamp the camera to the map's edges
 	Vector2D GetMapSizeInPixels();
+	
+	// L11
+	Vector2D GetMapSizeInTiles();
+
+	// L11
+	int GetTileWidth() const;
+	int GetTileHeight() const;
+
+	// L11
+	const MapLayer* GetNavigationLayer() const;
 
 public:
 	std::string mapFileName;

@@ -107,5 +107,6 @@ bool Scene::CleanUp()
 // L11 Return the player position
 Vector2D Scene::GetPlayerPosition()
 {
+	if (player == nullptr) return Vector2D(0, 0);
 	return player->GetPosition();
 }

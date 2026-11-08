@@ -4,6 +4,7 @@
 #include "Animation.h"
 #include <box2d/box2d.h>
 #include <SDL3/SDL.h>
+#include "Pathfinding.h"
 
 struct SDL_Texture;
 
@@ -22,6 +23,7 @@ public:
 	void OnCollisionEnd(PhysBody* physA, PhysBody* physB);
 	void SetPosition(Vector2D pos);
 	Vector2D GetPosition();
+	void PerformPathfinding();
 
 public:
 
@@ -34,4 +36,5 @@ public:
 private:
 	b2Vec2 velocity;
 	AnimationSet anims;
+	std::shared_ptr<Pathfinding> pathfinding;
 };
