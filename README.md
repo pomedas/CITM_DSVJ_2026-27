@@ -1,152 +1,170 @@
-# L10 — Animations and Parameters (Solution)
+# L11 — Pathfinding: BFS (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L10_Animations_Parameters`. Builds on
-`L09_Map_Collision_Solution`. All the TODOs are filled in — this is what your
-engine should look like at the end of part 1.
+The completed version of `L11_Pathfinding_BFS`. Builds on
+`L10_Animations_Parameters_Solution`. All four TODOs are filled in: a
+breadth-first search spreads from the enemy's tile and stops on the player's.
 
 ## The idea
 
-Three things land in this lecture: the player has an animated spritesheet
-instead of a static frame, the camera follows the player instead of sitting
-still, and the player's tuning (texture, frame size, speed, sound) comes from
-`config.xml` instead of being hardcoded — the same pattern
-`Module::LoadParameters` already taught for engine modules, now extended to
-entities.
+A new entity, `Enemy`, joins `Player` and `Item`. It owns a `Pathfinding`
+object and nothing else in the engine touches it.
 
-None of this changes `Player`'s L08 shape: `Update()` still does the logic and
-`Draw()` still does the rendering. The animation clock and the camera follow
-go in `Update()`; the frame lookup goes in `Draw()`.
+`Pathfinding` is a **plain class, not a Module**: it has no per-frame work of
+its own, so there is nothing for an `Update()` to do. The enemy creates it in
+`Start()` and calls into it from `Update()` and `Draw()`.
+
+The search is **stepped**: one call to `PropagateBFS()` expands exactly one
+tile, which is what makes the debug keys in `Enemy::PerformPathfinding()` work.
+
+| Key | What it does |
+|---|---|
+| **R** | reset the search to the enemy's current tile |
+| **J** | one expansion |
+| **Shift + J** | expand continuously |
+
+The enemy does not move in this lecture. Movement arrives at L14.
+
+## Where the walkable data comes from
+
+`MapTemplate.tmx` has a layer named `Navigation` with the custom properties
+`Draw = false` and `Navigation = true`. `Map::GetNavigationLayer()` walks the
+layers and returns the first one carrying that property, so the layer's id and
+position in the file don't matter.
+
+Blocked tiles are painted with the first tile of the `MapMetadata` tileset,
+whose `firstgid` is **49** — hence `blockedGid = 49`. That number is a fact
+about *this* TMX: a different blocking tile, or tilesets loaded in a different
+order, changes it.
 
 ## What each TODO does
 
-The numbering starts at 4 on purpose: it matches the slides.
-
 | Marker | File | Answer |
 |---|---|---|
-| `L10: TODO 4` | `src/Entity.h` | `Entity::SetParameters(pugi::xml_node)` + a `parameters` member — the `Module::LoadParameters` pattern, extended to entities |
-| `L10: TODO 4` | `src/Scene.cpp` | `Scene::Awake()` calls `player->SetParameters(entityManager->configParameters.child("player"))` right after `CreateEntity()` |
-| `L10: TODO 4` | `config.xml` | The `<player>` section: texture path, animations TSX path, frame width/height (plus speed and the pickup sound) |
-| `L10: TODO 5` | `src/Player.cpp` `Start()` | Texture, frame size and sound are read from `parameters`; `anims.LoadFromTSX(...)` with the `idle`/`move`/`jump` aliases, then `SetCurrent("idle")` |
-| `L10: TODO 5` | `src/Player.h` | An `AnimationSet anims` member |
-| `L10: TODO 6` | `src/Player.cpp` `Update()` | `anims.Update(dt)` — logic, so it lives in `Update()` |
-| `L10: TODO 6` | `src/Player.cpp` `Draw()` | `anims.GetCurrentFrame()` + `DrawTexture(..., &currentFrame)` — rendering, so it lives in `Draw()` |
-| `L10: TODO 7` | `src/Player.cpp` `Update()` | `anims.SetCurrent(...)` defaults to `"idle"` and switches to `"move"` while A/D is held |
-| `L10: TODO 8` | `src/Player.cpp` `Update()` | Horizontal-only camera follow at the quarter mark, clamped to the map's edges |
-| `L10: TODO 8` | `src/Map.h`/`.cpp` | `Map::GetMapSizeInPixels()` — the map's size in pixels, used by the clamp |
+| `L11: TODO 1` | `src/Pathfinding.cpp` `PropagateBFS()` | `frontier.front()` + `frontier.pop()`, then the four neighbours filtered through `IsWalkable()` into a local `std::list<Vector2D>` |
+| `L11: TODO 2` | `src/Pathfinding.cpp` `PropagateBFS()` | For each neighbour: `if (!visited[x][y]) { visited[x][y] = true; frontier.push(neighbor); }` |
+| `L11: TODO 3` | `src/Pathfinding.cpp` `IsWalkable()` | `layerNav != nullptr`, then bounds against `GetMapSizeInTiles()`, then `layerNav->Get(x, y) != blockedGid` |
+| `L11: TODO 4` | `src/Pathfinding.cpp` `PropagateBFS()` | Peek at `frontier.front()`, convert the player's position with `WorldToMap()`, and set `foundDestination` if they are the same tile |
 
-In the handout, the `Entity::SetParameters()` code (TODO 4) and
-`Map::GetMapSizeInPixels()` (TODO 8) are already written and only marked, so
-students can focus on the player; they are listed here for completeness.
+Given, not written by students: the whole of `Enemy`, `Pathfinding`'s
+constructor / `ResetPath()` / `DrawPath()` / `CleanUp()`, the four new `Map`
+accessors, `Scene::GetPlayerPosition()`, `Player::GetPosition()`,
+`Vector2D::operator==`, the `<enemy>` section of `config.xml` and the
+`Navigation` layer in the TMX.
 
-This branch also ships `Assets/Textures/player2_spritesheet.tsx`, which
-students build in Tiled during class, and the matching `.vcxproj` entries.
-
-## Why the animation split matters
+## Why `visited` is marked when pushing, not when popping
 
 ```cpp
-bool Player::Update(float dt) {
+for (const auto& neighbor : neighbors) {
+    if (!visited[(int)neighbor.getX()][(int)neighbor.getY()]) {
+        visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;   // at discovery
+        frontier.push(neighbor);
+    }
+}
+```
+
+Marking at pop produces the same *set* of visited tiles and a quietly wrong
+queue: in the window between a tile being discovered and being expanded, its
+other neighbours discover it again and push it a second and third time. On an
+open map that is several times the work for an identical result, and it is the
+kind of bug that never shows up as a wrong answer — only as a slow one. This is
+the point worth making on the board.
+
+## Why `visited` is a matrix and not a list
+
+`std::vector<std::vector<bool>> visited`, indexed `visited[x][y]`, is sized
+once in the constructor from `Map::GetMapSizeInTiles()` and cleared in place by
+`ResetPath()`. Nothing allocates during a search.
+
+The alternative — a `std::list<Vector2D>` of visited tiles, searched linearly —
+costs a scan of the whole list for every neighbour of every expansion, and, more
+importantly, has nowhere to put *per-tile* data. L12 needs a parent and a cost
+for each tile; a grid has a slot for them already, a list does not. Paying the
+layout cost now is why L12 is an addition rather than a rewrite.
+
+## Why the destination check comes before the pop
+
+```cpp
+bool foundDestination = false;
+if (!frontier.empty()) {
+    Vector2D frontierTile = frontier.front();
     ...
-    anims.Update(dt);     // logic: advance the animation clock
-    return true;
+    if (frontierTile == playerPosTile) foundDestination = true;
 }
 
-bool Player::Draw() {
-    SDL_Rect currentFrame = anims.GetCurrentFrame();
-    Engine::GetInstance().render->DrawTexture(texture, ..., &currentFrame);  // rendering
-    return true;
-}
+if (!frontier.empty() && !foundDestination) { /* expand */ }
 ```
 
-This is the exact `Update()`/`Draw()` boundary L04 drew for entities in
-general — logic in `Update()`, rendering in `Draw()` — applied to the one new
-piece of per-frame state this lecture adds.
+The check peeks at the tile that is *about* to be expanded and leaves it in the
+queue, so the search stops with the goal tile still visible in the frontier and
+`DrawPath()` can highlight it. Popping first and then testing would reach the
+same conclusion one expansion later and leave nothing to point at.
 
-## Why the camera follow writes `render->camera.x` directly
+The destination is read fresh every call from `Scene::GetPlayerPosition()`
+rather than stored at `ResetPath()` time: move the player, press **R**, and the
+search aims at the new tile with no extra state.
 
-The camera is an `SDL_FRect` since L01, so `camera.x` is a `float` and `Render`
-rounds the final screen position at draw time. Writing a float target straight
-into it loses nothing, so the follow needs no helper and no shadow position.
+## Why `Pathfinding` is a plain class owned by the enemy
 
-```cpp
-Engine::GetInstance().render->camera.x = camW / 4.0f - position.getX();
-```
+It has no `Update()` to run. A Module that does not tick teaches the wrong
+thing about what a Module is for, and `Map` — which already parses the TMX,
+draws it, builds its colliders and answers queries about it — does not need a
+fifth responsibility.
 
-This keeps the player a quarter of the way from the screen's left edge, not
-centred: a deliberate side-scroller choice that shows more of the level ahead
-than behind. The follow is **horizontal only** — there is no vertical term, so
-jumping does not drag the view up and down. The clamp (`limitLeft`/`limitRight`,
-using `Map::GetMapSizeInPixels()`) stops the follow at the map's edges instead
-of showing empty space past them.
-
-## Why player tuning moves to `config.xml` but the spawn position doesn't
-
-`Module::LoadParameters(pugi::xml_node)` has existed since L05, but `Player` is
-an `Entity`, not a `Module` — nothing handed it a slice of `config.xml`.
-`Entity::SetParameters()` is the parallel. The `<player>` node lives inside
-`<entitymanager>`, so `Scene::Awake()` fetches it from
-`EntityManager::configParameters` and hands it to the player by hand.
-
-This **works because of the L04 pending queue**: `CreateEntity()` returns a
-constructed-but-not-yet-`Awake`'d entity, sitting in `EntityManager`'s `pending`
-list until the next `InitialisePending()` call. That is the window
-`SetParameters()` needs — call it any later and `Player::Start()` would already
-have read an empty `parameters` node.
-
-It also **depends on the module order.** `entityManager` is registered before
-`scene` in the `Engine` constructor, so its parameters are loaded before
-`Scene::Awake()` runs. The side effect is that registration order is also
-`Update()` and draw order: entities now update before the scene does.
-
-**Initial position stays in code.** A spawn point is level data, and L15 loads
-it from a Tiled object layer — putting it in `config.xml` now and moving it to
-the map later would teach the wrong home for it twice. The spawn is
-`(300, 300)`, clear of the left wall that L09's collision layer added.
-
-**Animation clip names stay in code too.** `{0, "idle"}, {11, "move"}, {22, "jump"}`
-are tile ids from `player2_spritesheet.tsx`'s own layout — a fact about the
-asset, not a tunable.
+The cost of one instance per enemy is that each enemy carries its own
+`visited` grid and repeats the same search; with one enemy that is invisible,
+and L14 is where it starts to matter. The texture is shared through
+`Textures::Load()`, and `Enemy::CleanUp()` calls `Pathfinding::CleanUp()` so
+the debug texture is released with the entity that loaded it.
 
 ## Other changes in this lecture
 
-- **`Animation::Update(float dt)` takes seconds.** Frame durations and the
-  accumulator are `float` seconds, converted once from the TSX's millisecond
-  `duration` attribute at load time. `dt` has been in seconds since L02.
-- **Physics debug draw starts off.** F1 toggles the Box2D wireframes.
-- **`MapTemplate.tmx`** has colliders on all the platforms, and the
-  `Collisions` layer is no longer drawn.
-- **The arrow-key camera from L03** is still in `Scene::Update()`. It runs after
-  the follow now, so holding Left/Right shifts the view a few pixels instead of
-  scrolling it; Up/Down still move the camera vertically.
+- **`EntityType::ENEMY`** and its case in `EntityManager::CreateEntity()`.
+  `ColliderType::ENEMY` already existed since L08.
+- **`Map::WorldToMap()`** — the inverse of L07's `MapToWorld()`. It floors
+  rather than truncating, so a negative world coordinate maps to a negative
+  tile and the bounds check in `IsWalkable()` rejects it instead of accepting
+  tile 0.
+- **`Vector2D::operator==`** — needed to compare tile coordinates.
+- **`Player::GetPosition()`** returns the body's position corrected to the
+  sprite's top-left, so the player's tile matches the tile they look like they
+  are standing on.
+- **The enemy's start tile** is `WorldToMap(x, y + 1)`: one pixel down, so it
+  resolves to the tile the enemy stands on rather than the boundary above it.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move and **F1**
-toggles the Box2D debug wireframes. The player should visibly walk instead of
-sliding as a static frame, and the camera should start scrolling once you walk
-far enough from the quarter-mark position.
+Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move the
+player, **F1** toggles the Box2D debug wireframes, **R** / **J** / **Shift+J**
+drive the search. Holding **Shift+J** should flood the walkable part of the
+level in rings and stop at the tile the player is standing on; the expansion
+should never cross a painted navigation tile and never leave the map.
 
 ## Read the code
 
-Start at `Player::Start()` for how `parameters` becomes a texture, a frame size
-and an `AnimationSet`. Then `Animation::Update()`/`AnimationSet::LoadFromTSX()`
-in `src/Animation.cpp` for the clip machinery itself (given, not a TODO — you
-call it, like `Physics` at L08). Then the camera follow at the end of
-`Player::Update()`.
+`Enemy::Start()` for where the `Pathfinding` object and the first `ResetPath()`
+come from, then `Pathfinding::PropagateBFS()` — the whole algorithm is fifteen
+lines. `DrawPath()` after that, for how the visited grid and the frontier queue
+become two different tiles from `MapMetadata.png`.
 
 ## Homework
 
-- Compare this branch against `L10_Animations_Parameters` — the diff should be
-  the TODO bodies plus the TSX.
-- The `"jump"` clip is registered but the player cannot jump yet. Add a jump,
-  and switch to the clip when the jump starts and back on landing.
-- If the player TSX is missing, `AnimationSet::LoadFromTSX()` logs and returns
-  `false`, silently leaving the player idle-only. Given L05's "hard-fail on bad
-  config" precedent, should a missing player TSX fail the same way?
+- Compare this branch against `L11_Pathfinding_BFS` — the diff should be the
+  TODO bodies and nothing else.
+- Paint an enclosed pocket on the `Navigation` layer and start the enemy
+  outside it: the search ends with an empty frontier and no goal. What should
+  the enemy do with that answer?
+- BFS treats every step as costing the same. Sketch a map where that gives a
+  path you would not want an enemy to take — that map is L12's reason to exist.
+- The search is restarted by hand with **R**. What should trigger a restart
+  once the enemy actually walks (L14), and how often?
 
 ## Reference
 
-- Tiled: tile animations — <https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-animation-editor>
-- A1 spec: "Parameters loading — read configurations and entity parameters
-  from external files: Player parameters (initial position, speed, tiles)"
+- Red Blob Games, *Introduction to A\** —
+  <https://www.redblobgames.com/pathfinding/a-star/introduction.html>
+- Tiled: custom properties —
+  <https://doc.mapeditor.org/en/stable/manual/custom-properties/>
+- A1 spec: "Pathfinding — enemies use a pathfinding algorithm to reach the
+  player"
