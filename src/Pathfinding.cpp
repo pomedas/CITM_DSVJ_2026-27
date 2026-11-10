@@ -10,12 +10,21 @@ Pathfinding::Pathfinding() {
     
      //Loads texture to draw the path
     pathTex = Engine::GetInstance().textures.get()->Load("Assets/Maps/MapMetadata.png");
+
+    // L12: texture used to draw the computed path
+    tileX = Engine::GetInstance().textures.get()->Load("Assets/Maps/x.png");
     map = Engine::GetInstance().map.get();
     layerNav = map->GetNavigationLayer();
 
     //Creates a vector of the size of the navigation grid
     Vector2D mapSize = map->GetMapSizeInTiles();
     visited = std::vector<std::vector<bool>>((int)mapSize.getX(), std::vector<bool>((int)mapSize.getY(), false));
+
+    // L12: breadcrumbs and costSoFar use the same layout as visited, so the three grids
+    // are indexed the same way. They are created once here and cleared in ResetPath:
+    // nothing is allocated during a search.
+    breadcrumbs = std::vector<std::vector<Vector2D>>((int)mapSize.getX(), std::vector<Vector2D>((int)mapSize.getY(), Vector2D(-1, -1)));
+    costSoFar = std::vector<std::vector<int>>((int)mapSize.getX(), std::vector<int>((int)mapSize.getY(), 0));
 }
 
 Pathfinding::~Pathfinding() {
@@ -28,6 +37,12 @@ bool Pathfinding::CleanUp()
         Engine::GetInstance().textures->UnLoad(pathTex);
         pathTex = nullptr;
     }
+
+    // L12
+    if (tileX != nullptr) {
+        Engine::GetInstance().textures->UnLoad(tileX);
+        tileX = nullptr;
+    }
     return true;
 }
 
@@ -39,14 +54,25 @@ void Pathfinding::ResetPath(Vector2D pos) {
         frontier.pop();
     }
 
+    // L12: clear the Dijkstra frontier as well
+    while (!frontierDijkstra.empty()) {
+        frontierDijkstra.pop();
+    }
+
     //Clear the visited list
     Vector2D mapSize = map->GetMapSizeInTiles();
     for (int i = 0; i < mapSize.getX(); i++){
         for (int j = 0; j < mapSize.getY(); j++) {
             visited[i][j] = false;
+
+            // L12: clear the breadcrumbs and the accumulated costs
+            breadcrumbs[i][j] = Vector2D(-1, -1);
+            costSoFar[i][j] = 0;
         }
     }
 
+    // L12: clear the path from the previous search
+    pathTiles.clear();
 
     if (!IsWalkable((int)pos.getX(), (int)pos.getY()))
     {
@@ -58,6 +84,14 @@ void Pathfinding::ResetPath(Vector2D pos) {
 	// Add the starting position to the queue and mark it as visited
     visited[(int)pos.getX()][(int)pos.getY()] = true;
     frontier.push(pos);
+
+    // L12: the start tile is its own breadcrumb. ComputePath walks the breadcrumbs
+    // backwards and stops when a tile points to itself, so this is what ends the walk.
+    breadcrumbs[(int)pos.getX()][(int)pos.getY()] = pos;
+
+    // L12: the start costs nothing to reach, and seeds the Dijkstra frontier
+    costSoFar[(int)pos.getX()][(int)pos.getY()] = 0;
+    frontierDijkstra.push(std::make_pair(0, pos));
 }
 
 void Pathfinding::DrawPath() {
@@ -112,6 +146,33 @@ void Pathfinding::DrawPath() {
         frontierCopy.pop();
     }
 
+    // L12: Draw the Dijkstra frontier, same idea as the BFS one.
+    // A priority queue cannot be iterated either, so we copy it and empty the copy.
+    std::priority_queue<std::pair<int, Vector2D>, 
+                        std::vector<std::pair<int, Vector2D>>, 
+                        std::greater<std::pair<int, Vector2D>>> frontierDijkstraCopy = frontierDijkstra;
+
+
+    while (!frontierDijkstraCopy.empty()) {
+
+        Vector2D frontierTile = frontierDijkstraCopy.top().second;
+        Vector2D pos = map->MapToWorld((int)frontierTile.getX(), (int)frontierTile.getY());
+
+        int posInTileSetX = 1;
+        int posInTileSetY = 1;
+        SDL_Rect rect = { posInTileSetX,posInTileSetY,map->GetTileWidth(),map->GetTileHeight() };
+        Engine::GetInstance().render->DrawTexture(pathTex, (int)pos.getX(), (int)pos.getY(), &rect);
+
+        frontierDijkstraCopy.pop();
+    }
+
+    // L12: Draw the computed path. x.png is a single 32x32 image, not a tileset,
+    // so it is drawn whole instead of with a source rect.
+    for (const auto& pathTile : pathTiles) {
+        Vector2D pos = map->MapToWorld((int)pathTile.getX(), (int)pathTile.getY());
+        Engine::GetInstance().render->DrawTexture(tileX, (int)pos.getX(), (int)pos.getY());
+    }
+
 }
 
 bool Pathfinding::IsWalkable(int x, int y) {
@@ -149,6 +210,8 @@ void Pathfinding::PropagateBFS() {
 
         if (frontierTile == playerPosTile) {
             foundDestination = true;
+
+            // L12: TODO 2: the destination is reached, follow the breadcrumbs back to the start
         }
     }
 
@@ -178,9 +241,43 @@ void Pathfinding::PropagateBFS() {
 
             if (!visited[(int)neighbor.getX()][(int)neighbor.getY()]) {
                 visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;
+
+                // L12: TODO 1: record the tile we reached this neighbour from
                 frontier.push(neighbor);
             }
         }
 
     }
+}
+
+void Pathfinding::ComputePath(Vector2D destinationTile) {
+
+    // L12: TODO 2: Follow the breadcrumps to goal back to the origin
+    // at each step, add the point into "pathTiles" (it will then draw automatically)
+
+}
+
+// L12: Cost of entering a tile.
+// This is only called on walkable tiles: checking the map limits and the blocked tiles
+// is IsWalkable's job. It must NEVER return a negative value, because the result is
+// added to the accumulated cost of the path.
+int Pathfinding::MovementCost(int x, int y) {
+
+    if (layerNav == nullptr) return 1;
+    if (layerNav->Get(x, y) == highCostGid) return highCost;
+
+    return 1;
+}
+
+void Pathfinding::PropagateDijkstra() {
+
+    // L12: TODO 3: Dijkstra = BFS + movement cost + priority queue.
+    // Same shape as PropagateBFS(), with three differences:
+    //   - read the cheapest tile with frontierDijkstra.top().second (and pop it)
+    //   - the cost of a neighbour is costSoFar[current] + MovementCost(neighbor)
+    //   - take the neighbour if it was never visited OR the new cost is lower than
+    //     costSoFar[neighbor]; then store the cost, the breadcrumb and push
+    //     (newCost, neighbor) to the frontier
+    // Don't forget to stop and call ComputePath() when the destination is reached.
+
 }

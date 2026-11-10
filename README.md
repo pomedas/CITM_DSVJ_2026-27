@@ -1,170 +1,120 @@
-# L11 — Pathfinding: BFS (Solution)
+# L12 — Pathfinding: Dijkstra
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L11_Pathfinding_BFS`. Builds on
-`L10_Animations_Parameters_Solution`. All four TODOs are filled in: a
-breadth-first search spreads from the enemy's tile and stops on the player's.
+Builds on `L11_Pathfinding_BFS_Solution`. The search learns to remember where
+it came from, so it can hand back the **path**, and you write a second search —
+Dijkstra — that finds the *cheapest* path when tiles have different costs.
+Check `L12_Pathfinding_Dijkstra_Solution` once you're done, or if you get stuck.
 
 ## The idea
 
-A new entity, `Enemy`, joins `Player` and `Item`. It owns a `Pathfinding`
-object and nothing else in the engine touches it.
+L11 answered "is the player reachable?" but threw the route away. Two additions:
 
-`Pathfinding` is a **plain class, not a Module**: it has no per-frame work of
-its own, so there is nothing for an `Update()` to do. The enemy creates it in
-`Start()` and calls into it from `Update()` and `Draw()`.
+1. **Breadcrumbs.** Every time a tile is discovered we record the tile we came
+   from. When the search reaches the player, `ComputePath()` follows the
+   breadcrumbs backwards to the start and stores the tiles in `pathTiles`.
+2. **Cost.** BFS counts every step as 1, so it finds the path with the fewest
+   *tiles*. Dijkstra adds a cost per tile (`MovementCost()`) and always expands
+   the *cheapest* tile in the frontier, so it finds the path with the lowest
+   total *cost*. The frontier becomes a priority queue.
 
-The search is **stepped**: one call to `PropagateBFS()` expands exactly one
-tile, which is what makes the debug keys in `Enemy::PerformPathfinding()` work.
+BFS is just Dijkstra where every cost is 1 — which is why the code looks so
+alike.
 
 | Key | What it does |
 |---|---|
-| **R** | reset the search to the enemy's current tile |
-| **J** | one expansion |
-| **Shift + J** | expand continuously |
+| **R** | reset both searches to the enemy's current tile |
+| **J** / **Shift + J** | one BFS expansion / expand continuously |
+| **K** / **Shift + K** | one Dijkstra expansion / expand continuously |
 
-The enemy does not move in this lecture. Movement arrives at L14.
+BFS and Dijkstra share `visited`, `breadcrumbs` and `pathTiles`, so run **one
+search per reset**: press **R** before switching from J to K.
 
-## Where the walkable data comes from
+## The map: a high-cost band
 
-`MapTemplate.tmx` has a layer named `Navigation` with the custom properties
-`Draw = false` and `Navigation = true`. `Map::GetNavigationLayer()` walks the
-layers and returns the first one carrying that property, so the layer's id and
-position in the file don't matter.
+To tell the two searches apart you need tiles that are walkable but expensive.
+`MovementCost()` returns `highCost = 5` for every tile on the `Navigation`
+layer with gid **50** (the second tile of the `MapMetadata` tileset), and 1 for
+the rest. `MapTemplate.tmx` is **unchanged from L11**, so paint a band of gid-50
+tiles across the level on the `Navigation` layer in Tiled (the solution branch
+ships one). Without a band both searches give identical paths; with it, BFS cuts
+straight through and Dijkstra walks around when that is cheaper.
 
-Blocked tiles are painted with the first tile of the `MapMetadata` tileset,
-whose `firstgid` is **49** — hence `blockedGid = 49`. That number is a fact
-about *this* TMX: a different blocking tile, or tilesets loaded in a different
-order, changes it.
+`highCostGid`, like `blockedGid`, is a fact about *this* TMX: check the
+`firstgid` of your own tileset.
 
 ## What each TODO does
 
-| Marker | File | Answer |
+| Marker | File | What you write |
 |---|---|---|
-| `L11: TODO 1` | `src/Pathfinding.cpp` `PropagateBFS()` | `frontier.front()` + `frontier.pop()`, then the four neighbours filtered through `IsWalkable()` into a local `std::list<Vector2D>` |
-| `L11: TODO 2` | `src/Pathfinding.cpp` `PropagateBFS()` | For each neighbour: `if (!visited[x][y]) { visited[x][y] = true; frontier.push(neighbor); }` |
-| `L11: TODO 3` | `src/Pathfinding.cpp` `IsWalkable()` | `layerNav != nullptr`, then bounds against `GetMapSizeInTiles()`, then `layerNav->Get(x, y) != blockedGid` |
-| `L11: TODO 4` | `src/Pathfinding.cpp` `PropagateBFS()` | Peek at `frontier.front()`, convert the player's position with `WorldToMap()`, and set `foundDestination` if they are the same tile |
+| `L12: TODO 1` | `Pathfinding.cpp` `PropagateBFS()` | When a neighbour is first discovered, record the tile it came from in `breadcrumbs` |
+| `L12: TODO 2` | `Pathfinding.cpp` `ComputePath()` and `PropagateBFS()` | Write `ComputePath()`: follow the breadcrumbs from the destination back to the start, adding each tile to `pathTiles`. Then call it from `PropagateBFS()` once the destination is found |
+| `L12: TODO 3` | `Pathfinding.cpp` `PropagateDijkstra()` | The whole function: BFS + cost + priority queue, see below |
 
-Given, not written by students: the whole of `Enemy`, `Pathfinding`'s
-constructor / `ResetPath()` / `DrawPath()` / `CleanUp()`, the four new `Map`
-accessors, `Scene::GetPlayerPosition()`, `Player::GetPosition()`,
-`Vector2D::operator==`, the `<enemy>` section of `config.xml` and the
-`Navigation` layer in the TMX.
+Do them in order **1 → 2 → 3**. `breadcrumbs` is filled by TODO 1 and read by
+TODO 2. After TODO 2, press **R** then **Shift + J**:
+an **X** should be drawn from the enemy to the player. TODO 3 is the same
+again for **K**.
 
-## Why `visited` is marked when pushing, not when popping
+Given, not a TODO — read them: `MovementCost()`, the new
+members in `Pathfinding.h`, the new lines in the constructor / `ResetPath()` /
+`DrawPath()` / `CleanUp()`, the K keys in `Enemy`, and `Vector2D::operator<`
+and `operator>`.
 
-```cpp
-for (const auto& neighbor : neighbors) {
-    if (!visited[(int)neighbor.getX()][(int)neighbor.getY()]) {
-        visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;   // at discovery
-        frontier.push(neighbor);
-    }
-}
-```
+## Why the start tile is its own breadcrumb
 
-Marking at pop produces the same *set* of visited tiles and a quietly wrong
-queue: in the window between a tile being discovered and being expanded, its
-other neighbours discover it again and push it a second and third time. On an
-open map that is several times the work for an identical result, and it is the
-kind of bug that never shows up as a wrong answer — only as a slow one. This is
-the point worth making on the board.
+`ResetPath()` sets `breadcrumbs[start] = start`. Your `ComputePath()` has to walk
+`current = breadcrumbs[current]` and stops when a tile points at itself, so
+that is the only thing that ends the walk. Every other tile starts at
+`(-1, -1)`, meaning "never reached": if the walk hits one there is no path, so
+give up with an empty `pathTiles` rather than indexing the grid with `-1`.
 
-## Why `visited` is a matrix and not a list
+## Dijkstra: what changes from BFS
 
-`std::vector<std::vector<bool>> visited`, indexed `visited[x][y]`, is sized
-once in the constructor from `Map::GetMapSizeInTiles()` and cleared in place by
-`ResetPath()`. Nothing allocates during a search.
+- **The queue is ordered by cost.** `frontierDijkstra` is a
+  `std::priority_queue`, a max-heap by default; `std::greater` flips it so
+  `top()` is the cheapest tile.
+- **A tile can be re-visited.** BFS never improves on its first discovery,
+  because the first discovery is always the shortest. With costs that is no
+  longer true, so a cheaper route has to be allowed to overwrite an expensive
+  one.
+- **`MovementCost()` must never be negative.** Dijkstra's guarantee depends on
+  it.
 
-The alternative — a `std::list<Vector2D>` of visited tiles, searched linearly —
-costs a scan of the whole list for every neighbour of every expansion, and, more
-importantly, has nowhere to put *per-tile* data. L12 needs a parent and a cost
-for each tile; a grid has a slot for them already, a list does not. Paying the
-layout cost now is why L12 is an addition rather than a rewrite.
+## Why `Vector2D` gained `operator<` and `operator>`
 
-## Why the destination check comes before the pop
-
-```cpp
-bool foundDestination = false;
-if (!frontier.empty()) {
-    Vector2D frontierTile = frontier.front();
-    ...
-    if (frontierTile == playerPosTile) foundDestination = true;
-}
-
-if (!frontier.empty() && !foundDestination) { /* expand */ }
-```
-
-The check peeks at the tile that is *about* to be expanded and leaves it in the
-queue, so the search stops with the goal tile still visible in the frontier and
-`DrawPath()` can highlight it. Popping first and then testing would reach the
-same conclusion one expansion later and leave nothing to point at.
-
-The destination is read fresh every call from `Scene::GetPlayerPosition()`
-rather than stored at `ResetPath()` time: move the player, press **R**, and the
-search aims at the new tile with no extra state.
-
-## Why `Pathfinding` is a plain class owned by the enemy
-
-It has no `Update()` to run. A Module that does not tick teaches the wrong
-thing about what a Module is for, and `Map` — which already parses the TMX,
-draws it, builds its colliders and answers queries about it — does not need a
-fifth responsibility.
-
-The cost of one instance per enemy is that each enemy carries its own
-`visited` grid and repeats the same search; with one enemy that is invisible,
-and L14 is where it starts to matter. The texture is shared through
-`Textures::Load()`, and `Enemy::CleanUp()` calls `Pathfinding::CleanUp()` so
-the debug texture is released with the entity that loaded it.
-
-## Other changes in this lecture
-
-- **`EntityType::ENEMY`** and its case in `EntityManager::CreateEntity()`.
-  `ColliderType::ENEMY` already existed since L08.
-- **`Map::WorldToMap()`** — the inverse of L07's `MapToWorld()`. It floors
-  rather than truncating, so a negative world coordinate maps to a negative
-  tile and the bounds check in `IsWalkable()` rejects it instead of accepting
-  tile 0.
-- **`Vector2D::operator==`** — needed to compare tile coordinates.
-- **`Player::GetPosition()`** returns the body's position corrected to the
-  sprite's top-left, so the player's tile matches the tile they look like they
-  are standing on.
-- **The enemy's start tile** is `WorldToMap(x, y + 1)`: one pixel down, so it
-  resolves to the tile the enemy stands on rather than the boundary above it.
+The frontier holds `std::pair<int, Vector2D>`, and `std::greater` on a pair
+compares `first` and, on a tie, `second`. So `Vector2D` needs an ordering. It is
+x then y, and it is arbitrary: it only decides which of two equal-cost tiles
+is expanded first, and the resulting paths are equally cheap. Because of that,
+BFS and Dijkstra may break ties differently on the same map.
 
 ## Build
 
-Open `PlatformGame.sln`, select **x64**, build and run. **A/D** move the
-player, **F1** toggles the Box2D debug wireframes, **R** / **J** / **Shift+J**
-drive the search. Holding **Shift+J** should flood the walkable part of the
-level in rings and stop at the tile the player is standing on; the expansion
-should never cross a painted navigation tile and never leave the map.
+Open `PlatformGame.sln`, select **x64**, build and run. Press **R**, then hold
+**Shift + J** (BFS) or **Shift + K** (Dijkstra): the search floods outward and
+stops at the player with an **X** drawn along the route. Compare the two
+routes around your gid-50 band.
 
 ## Read the code
 
-`Enemy::Start()` for where the `Pathfinding` object and the first `ResetPath()`
-come from, then `Pathfinding::PropagateBFS()` — the whole algorithm is fifteen
-lines. `DrawPath()` after that, for how the visited grid and the frontier queue
-become two different tiles from `MapMetadata.png`.
+`ResetPath()` for how the three grids are seeded, then `MovementCost()` and
+`DrawPath()` for how `pathTiles` is drawn. Write `PropagateDijkstra()` last, next to `PropagateBFS()`.
 
 ## Homework
 
-- Compare this branch against `L11_Pathfinding_BFS` — the diff should be the
-  TODO bodies and nothing else.
-- Paint an enclosed pocket on the `Navigation` layer and start the enemy
-  outside it: the search ends with an empty frontier and no goal. What should
-  the enemy do with that answer?
-- BFS treats every step as costing the same. Sketch a map where that gives a
-  path you would not want an enemy to take — that map is L12's reason to exist.
-- The search is restarted by hand with **R**. What should trigger a restart
-  once the enemy actually walks (L14), and how often?
+- Compare your code against `L12_Pathfinding_Dijkstra_Solution` — the diff
+  should be nothing but formatting.
+- Change `highCost` to 1, then to 50. What happens to the Dijkstra path in each
+  case, and why does BFS not care?
+- Dijkstra expands in every direction. What extra information would let it
+  head towards the player instead? (That is A\*.)
+- Why is it wrong for `MovementCost()` to return 0 or less for a tile?
 
 ## Reference
 
 - Red Blob Games, *Introduction to A\** —
   <https://www.redblobgames.com/pathfinding/a-star/introduction.html>
-- Tiled: custom properties —
-  <https://doc.mapeditor.org/en/stable/manual/custom-properties/>
 - A1 spec: "Pathfinding — enemies use a pathfinding algorithm to reach the
   player"
