@@ -23,6 +23,11 @@ public:
     Vector2D operator/(float scalar) const;
     bool operator==(const Vector2D& other) const;
 
+    // L12: ordering (x first, then y). std::priority_queue<std::pair<int, Vector2D>, ..., std::greater<>>
+    // compares the whole pair, so when two tiles cost the same it falls back to comparing the tiles.
+    bool operator<(const Vector2D& other) const;
+    bool operator>(const Vector2D& other) const;
+
     // Output stream operator
     friend std::ostream& operator<<(std::ostream& os, const Vector2D& vec);
 

@@ -56,3 +56,12 @@ std::ostream& operator<<(std::ostream& os, const Vector2D& vec) {
 bool Vector2D::operator==(const Vector2D& other) const {
     return x == other.x && y == other.y;
 }
+
+// L12: ordering used to break ties between tiles with the same cost
+bool Vector2D::operator<(const Vector2D& other) const {
+    return x < other.x || (x == other.x && y < other.y);
+}
+
+bool Vector2D::operator>(const Vector2D& other) const {
+    return other < *this;
+}
