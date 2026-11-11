@@ -107,6 +107,17 @@ void Enemy::PerformPathfinding() {
 		pathfinding->PropagateBFS();
 	}
 
+	// L12: Propagate Dijkstra with K key
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_K) == KEY_DOWN) {
+		pathfinding->PropagateDijkstra();
+	}
+
+	// L12: Propagate Dijkstra continuously with LShift + K
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_K) == KEY_REPEAT &&
+		Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT) {
+		pathfinding->PropagateDijkstra();
+	}
+
 }
 
 bool Enemy::CleanUp()
