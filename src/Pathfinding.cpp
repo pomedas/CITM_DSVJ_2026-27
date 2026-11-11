@@ -255,32 +255,21 @@ void Pathfinding::PropagateBFS() {
 // L12: Follow the breadcrumbs from the destination back to the start.
 void Pathfinding::ComputePath(Vector2D destinationTile) {
 
+    // L12: TODO 2: Follow the breadcrumps to goal back to the origin
+    // at each step, add the point into "pathTiles" (it will then draw automatically)
+
+    // Clear the previous path
     pathTiles.clear();
+    // Add the destination tile to the path
+    pathTiles.push_back(destinationTile);
+    // Start from the destination tile and follow the breadcrumbs back to the start
+    Vector2D currentTile = destinationTile;
 
-    Vector2D current = destinationTile;
-
-    // The start tile is its own breadcrumb, so this stops exactly there. The loop always
-    // ends: every breadcrumb step moves one tile closer to the start.
-    while (!(current == breadcrumbs[(int)current.getX()][(int)current.getY()])) {
-
-        pathTiles.push_back(current);
-
-        Vector2D previous = breadcrumbs[(int)current.getX()][(int)current.getY()];
-
-        // A tile with no breadcrumb means there is no path from here. Give up rather
-        // than walk off the grid.
-        if (previous.getX() < 0 || previous.getY() < 0) {
-            LOG("Pathfinding::ComputePath: no breadcrumb for tile (%d,%d)",
-                (int)current.getX(), (int)current.getY());
-            pathTiles.clear();
-            return;
-        }
-
-        current = previous;
+    //follow the breadcrumbs back to the start, stopping when a tile points to itself
+    while (breadcrumbs[(int)currentTile.getX()][(int)currentTile.getY()] != currentTile) {
+        currentTile = breadcrumbs[(int)currentTile.getX()][(int)currentTile.getY()];
+        pathTiles.push_back(currentTile);
     }
-
-    // Add the start tile, which the loop above stopped on
-    pathTiles.push_back(current);
 }
 
 // L12: Cost of entering a tile.
