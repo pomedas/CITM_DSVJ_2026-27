@@ -212,6 +212,7 @@ void Pathfinding::PropagateBFS() {
             foundDestination = true;
 
             // L12: TODO 2: the destination is reached, follow the breadcrumbs back to the start
+            ComputePath(frontierTile);
         }
     }
 
@@ -243,6 +244,7 @@ void Pathfinding::PropagateBFS() {
                 visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;
 
                 // L12: TODO 1: record the tile we reached this neighbour from
+                breadcrumbs[(int)neighbor.getX()][(int)neighbor.getY()] = frontierTile;
                 frontier.push(neighbor);
             }
         }
@@ -250,11 +252,24 @@ void Pathfinding::PropagateBFS() {
     }
 }
 
+// L12: Follow the breadcrumbs from the destination back to the start.
 void Pathfinding::ComputePath(Vector2D destinationTile) {
 
     // L12: TODO 2: Follow the breadcrumps to goal back to the origin
     // at each step, add the point into "pathTiles" (it will then draw automatically)
 
+    // Clear the previous path
+    pathTiles.clear();
+    // Add the destination tile to the path
+    pathTiles.push_back(destinationTile);
+    // Start from the destination tile and follow the breadcrumbs back to the start
+    Vector2D currentTile = destinationTile;
+
+    //follow the breadcrumbs back to the start, stopping when a tile points to itself
+    while (breadcrumbs[(int)currentTile.getX()][(int)currentTile.getY()] != currentTile) {
+        currentTile = breadcrumbs[(int)currentTile.getX()][(int)currentTile.getY()];
+        pathTiles.push_back(currentTile);
+    }
 }
 
 // L12: Cost of entering a tile.
@@ -272,12 +287,56 @@ int Pathfinding::MovementCost(int x, int y) {
 void Pathfinding::PropagateDijkstra() {
 
     // L12: TODO 3: Dijkstra = BFS + movement cost + priority queue.
-    // Same shape as PropagateBFS(), with three differences:
-    //   - read the cheapest tile with frontierDijkstra.top().second (and pop it)
-    //   - the cost of a neighbour is costSoFar[current] + MovementCost(neighbor)
-    //   - take the neighbour if it was never visited OR the new cost is lower than
-    //     costSoFar[neighbor]; then store the cost, the breadcrumb and push
-    //     (newCost, neighbor) to the frontier
-    // Don't forget to stop and call ComputePath() when the destination is reached.
+    // Note that the guard is on frontierDijkstra, the queue we are about to read.
+    bool foundDestination = false;
+    if (!frontierDijkstra.empty()) {
+        Vector2D frontierTile = frontierDijkstra.top().second;
+        Vector2D playerPos = Engine::GetInstance().scene->GetPlayerPosition();
+        Vector2D playerPosTile = Engine::GetInstance().map->WorldToMap((int)playerPos.getX(), (int)playerPos.getY());
 
+        if (frontierTile == playerPosTile) {
+            foundDestination = true;
+            ComputePath(frontierTile);
+        }
+    }
+
+    if (!frontierDijkstra.empty() && !foundDestination) {
+
+        //Get the cheapest tile in the queue, not the oldest one
+        Vector2D frontierTile = frontierDijkstra.top().second;
+        //remove it from the queue
+        frontierDijkstra.pop();
+
+        //Get the neighbors (4 directions)
+        std::list<Vector2D> neighbors;
+        if (IsWalkable((int)frontierTile.getX() + 1, (int)frontierTile.getY())) {
+            neighbors.push_back(Vector2D(frontierTile.getX() + 1, frontierTile.getY()));
+        }
+        if (IsWalkable((int)frontierTile.getX(), (int)frontierTile.getY() + 1)) {
+            neighbors.push_back(Vector2D(frontierTile.getX(), frontierTile.getY() + 1));
+        }
+        if (IsWalkable((int)frontierTile.getX() - 1, (int)frontierTile.getY())) {
+            neighbors.push_back(Vector2D(frontierTile.getX() - 1, frontierTile.getY()));
+        }
+        if (IsWalkable((int)frontierTile.getX(), (int)frontierTile.getY() - 1)) {
+            neighbors.push_back(Vector2D(frontierTile.getX(), frontierTile.getY() - 1));
+        }
+
+        for (const auto& neighbor : neighbors) {
+
+            //Cost of reaching this neighbour through the tile we just took out
+            int newCost = costSoFar[(int)frontierTile.getX()][(int)frontierTile.getY()] + MovementCost((int)neighbor.getX(), (int)neighbor.getY());
+
+            //Take it if we have never reached it, or if we have just found a cheaper way in.
+            //The second case is what BFS never does: a tile can be re-visited.
+            if (!visited[(int)neighbor.getX()][(int)neighbor.getY()] || newCost < costSoFar[(int)neighbor.getX()][(int)neighbor.getY()]) {
+
+                visited[(int)neighbor.getX()][(int)neighbor.getY()] = true;
+                costSoFar[(int)neighbor.getX()][(int)neighbor.getY()] = newCost;
+                breadcrumbs[(int)neighbor.getX()][(int)neighbor.getY()] = frontierTile;
+                frontierDijkstra.push(std::make_pair(newCost, neighbor));
+            }
+        }
+
+    }
 }
