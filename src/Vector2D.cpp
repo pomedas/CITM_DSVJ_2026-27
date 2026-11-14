@@ -67,3 +67,14 @@ bool Vector2D::operator>(const Vector2D& other) const {
 }
 
 // L13: TODO 1: Implement functions to calculate distance between two vectors
+float Vector2D::distanceManhattan(const Vector2D& other) const {
+    return std::abs(x - other.x) + std::abs(y - other.y);
+}
+
+float Vector2D::distanceEuclidean(const Vector2D& other) const {
+    return (float) std::sqrt(std::pow(x - other.x, 2) + std::pow(y - other.y, 2));
+}
+
+float Vector2D::distanceSquared(const Vector2D& other) const {
+    return (float) (std::pow(x - other.x, 2) + std::pow(y - other.y, 2));
+}

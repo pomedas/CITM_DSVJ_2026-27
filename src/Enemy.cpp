@@ -88,6 +88,23 @@ void Enemy::PerformPathfinding() {
 	// Pathfinding testing inputs
 
 	// L13: TODO 4: Move the enemy to the clicked tile and reset the path
+	if (Engine::GetInstance().input.get()->GetMouseButtonDown(1) == KEY_DOWN) {
+
+		int mouseX, mouseY;
+		Engine::GetInstance().input.get()->GetMousePosition(mouseX, mouseY);
+
+		//GetMousePosition already divides by the scale, so the camera is unscaled too
+		float scale = Engine::GetInstance().window.get()->GetScale();
+		Vector2D mouseTile = Engine::GetInstance().map.get()->WorldToMap(
+			(int)(mouseX - Engine::GetInstance().render.get()->camera.x / scale),
+			(int)(mouseY - Engine::GetInstance().render.get()->camera.y / scale));
+
+		if (pathfinding->IsWalkable((int)mouseTile.getX(), (int)mouseTile.getY())) {
+			Vector2D tileWorld = Engine::GetInstance().map.get()->MapToWorld((int)mouseTile.getX(), (int)mouseTile.getY());
+			SetPosition(Vector2D(tileWorld.getX() + texW / 2, tileWorld.getY() + texH / 2));
+			pathfinding->ResetPath(mouseTile);
+		}
+	}
 
 	// Reset pathfinding with R key
 	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_R) == KEY_DOWN) {
@@ -122,6 +139,33 @@ void Enemy::PerformPathfinding() {
 	}
 
 	// L13: TODO 3: Add the key inputs to propagate the A* algorithm with different heuristics (Manhattan, Euclidean, Squared)
+
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_B) == KEY_DOWN) {
+		pathfinding->PropagateAStar(ASTAR_HEURISTICS::MANHATTAN);
+	}
+
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_B) == KEY_REPEAT &&
+		Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT) {
+		pathfinding->PropagateAStar(ASTAR_HEURISTICS::MANHATTAN);
+	}
+
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_N) == KEY_DOWN) {
+		pathfinding->PropagateAStar(ASTAR_HEURISTICS::EUCLIDEAN);
+	}
+
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_N) == KEY_REPEAT &&
+		Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT) {
+		pathfinding->PropagateAStar(ASTAR_HEURISTICS::EUCLIDEAN);
+	}
+
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_M) == KEY_DOWN) {
+		pathfinding->PropagateAStar(ASTAR_HEURISTICS::SQUARED);
+	}
+
+	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_M) == KEY_REPEAT &&
+		Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT) {
+		pathfinding->PropagateAStar(ASTAR_HEURISTICS::SQUARED);
+	}
 
 }
 
