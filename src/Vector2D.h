@@ -28,6 +28,8 @@ public:
     bool operator<(const Vector2D& other) const;
     bool operator>(const Vector2D& other) const;
 
+    // L13: TODO 1: Implement functions to calculate distance between two vectors
+
     // Output stream operator
     friend std::ostream& operator<<(std::ostream& os, const Vector2D& vec);
 

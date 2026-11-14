@@ -9,6 +9,7 @@
 #include "Physics.h"
 #include "EntityManager.h"
 #include "Map.h"
+#include "Window.h"
 
 Enemy::Enemy() : Entity(EntityType::ENEMY)
 {
@@ -86,6 +87,8 @@ void Enemy::PerformPathfinding() {
 
 	// Pathfinding testing inputs
 
+	// L13: TODO 4: Move the enemy to the clicked tile and reset the path
+
 	// Reset pathfinding with R key
 	if (Engine::GetInstance().input.get()->GetKey(SDL_SCANCODE_R) == KEY_DOWN) {
 		//Get the position of the enemy
@@ -118,6 +121,8 @@ void Enemy::PerformPathfinding() {
 		pathfinding->PropagateDijkstra();
 	}
 
+	// L13: TODO 3: Add the key inputs to propagate the A* algorithm with different heuristics (Manhattan, Euclidean, Squared)
+
 }
 
 bool Enemy::CleanUp()
@@ -130,6 +135,7 @@ bool Enemy::CleanUp()
 
 void Enemy::SetPosition(Vector2D pos) {
 	pbody->SetPosition((int)(pos.getX()), (int)(pos.getY()));
+	Engine::GetInstance().physics->SetLinearVelocity(pbody, b2Vec2_zero);
 }
 
 Vector2D Enemy::GetPosition() {

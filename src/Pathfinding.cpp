@@ -59,6 +59,11 @@ void Pathfinding::ResetPath(Vector2D pos) {
         frontierDijkstra.pop();
     }
 
+    // L13: clear the A* frontier
+    while (!frontierAStar.empty()) {
+        frontierAStar.pop();
+    }
+
     //Clear the visited list
     Vector2D mapSize = map->GetMapSizeInTiles();
     for (int i = 0; i < mapSize.getX(); i++){
@@ -92,6 +97,7 @@ void Pathfinding::ResetPath(Vector2D pos) {
     // L12: the start costs nothing to reach, and seeds the Dijkstra frontier
     costSoFar[(int)pos.getX()][(int)pos.getY()] = 0;
     frontierDijkstra.push(std::make_pair(0, pos));
+    frontierAStar.push(std::make_pair(0, pos));
 }
 
 void Pathfinding::DrawPath() {
@@ -164,6 +170,24 @@ void Pathfinding::DrawPath() {
         Engine::GetInstance().render->DrawTexture(pathTex, (int)pos.getX(), (int)pos.getY(), &rect);
 
         frontierDijkstraCopy.pop();
+    }
+
+    // L13: Draw the A* frontier
+    std::priority_queue<std::pair<int, Vector2D>,
+                        std::vector<std::pair<int, Vector2D>>,
+                        std::greater<std::pair<int, Vector2D>>> frontierAStarCopy = frontierAStar;
+
+    while (!frontierAStarCopy.empty()) {
+
+        Vector2D frontierTile = frontierAStarCopy.top().second;
+        Vector2D pos = map->MapToWorld((int)frontierTile.getX(), (int)frontierTile.getY());
+
+        int posInTileSetX = 1;
+        int posInTileSetY = 1;
+        SDL_Rect rect = { posInTileSetX,posInTileSetY,map->GetTileWidth(),map->GetTileHeight() };
+        Engine::GetInstance().render->DrawTexture(pathTex, (int)pos.getX(), (int)pos.getY(), &rect);
+
+        frontierAStarCopy.pop();
     }
 
     // L12: Draw the computed path. x.png is a single 32x32 image, not a tileset,
@@ -339,4 +363,10 @@ void Pathfinding::PropagateDijkstra() {
         }
 
     }
+}
+
+void Pathfinding::PropagateAStar(ASTAR_HEURISTICS heuristic) {
+
+    // L13: TODO 2: Adapt Dijkstra algorithm for AStar. Consider the different heuristics
+
 }

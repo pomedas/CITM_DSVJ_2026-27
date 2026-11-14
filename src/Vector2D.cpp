@@ -65,3 +65,5 @@ bool Vector2D::operator<(const Vector2D& other) const {
 bool Vector2D::operator>(const Vector2D& other) const {
     return other < *this;
 }
+
+// L13: TODO 1: Implement functions to calculate distance between two vectors

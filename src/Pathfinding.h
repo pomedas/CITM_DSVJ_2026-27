@@ -5,6 +5,12 @@
 #include <SDL3/SDL.h>
 #include "Map.h"
 
+enum class ASTAR_HEURISTICS {
+    MANHATTAN,
+    EUCLIDEAN,
+    SQUARED
+};
+
 class Pathfinding
 {
 
@@ -26,6 +32,9 @@ public:
     void ComputePath(Vector2D destinationTile);
     int  MovementCost(int x, int y);
     void PropagateDijkstra();
+
+    // L13: A* Pathfinding methods
+    void PropagateAStar(ASTAR_HEURISTICS heuristic);
     
 public:
 
@@ -50,6 +59,12 @@ public:
     std::priority_queue<std::pair<int, Vector2D>,
                         std::vector<std::pair<int, Vector2D>>,
                         std::greater<std::pair<int, Vector2D>>> frontierDijkstra;
+
+    // L13: A* Pathfinding variables
+    // The frontier ordered by the priority f = g + h
+    std::priority_queue<std::pair<int, Vector2D>,
+                        std::vector<std::pair<int, Vector2D>>,
+                        std::greater<std::pair<int, Vector2D>>> frontierAStar;
     // The path, from the destination back to the start
     std::vector<Vector2D> pathTiles;
 	// Texture for the path tiles
