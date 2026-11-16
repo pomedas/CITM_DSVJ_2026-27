@@ -1,127 +1,161 @@
-# L12 — Pathfinding: Dijkstra (Solution)
+# L13 — Pathfinding: A\* (Solution)
 
 **Video Game Development (804237 DESVJ) · CITM UPC**
 
-The completed version of `L12_Pathfinding_Dijkstra`. Builds on
-`L11_Pathfinding_BFS_Solution`. All three TODOs are filled in: the search now
-remembers where it came from, so it can hand back the **path**, and a second
-search — Dijkstra — finds the *cheapest* path when tiles have different costs.
+The completed version of `L13_Pathfinding_AStar`. Builds on
+`L12_Pathfinding_Dijkstra_Solution`. All four TODOs are filled in: three
+distance heuristics, `PropagateAStar()`, the keys that run it, and left click to
+move the enemy.
 
 ## The idea
 
-L11 answered "is the player reachable?" but threw the route away. Two additions:
+Dijkstra sorts the frontier by `g`, the real cost of reaching a tile, and so
+spreads in every direction — it has no idea where the player is. A\* sorts it by
 
-1. **Breadcrumbs.** Every time a tile is discovered we record the tile we came
-   from. When the search reaches the player, `ComputePath()` follows the
-   breadcrumbs backwards to the start and stores the tiles in `pathTiles`.
-2. **Cost.** BFS counts every step as 1, so it finds the path with the fewest
-   *tiles*. Dijkstra adds a cost per tile (`MovementCost()`) and always expands
-   the *cheapest* tile in the frontier, so it finds the path with the lowest
-   total *cost*. The frontier becomes a priority queue.
+```
+f = g + h
+```
 
-BFS is just Dijkstra where every cost is 1 — which is why the code looks so
-alike.
+where `h` is a **heuristic**: a guess at the cost from that tile to the
+destination, made without searching. A tile that is expensive to reach but close
+to the player is now expanded before a cheap tile pointing the wrong way.
+
+Everything else is unchanged: same `visited`, `breadcrumbs`, `costSoFar` and
+`ComputePath()`. One number in the push is different.
+
+| | Frontier ordered by |
+|---|---|
+| **BFS** | insertion order (FIFO) |
+| **Dijkstra** | `g` — cost so far |
+| **A\*** | `f = g + h` — cost so far plus estimate of what is left |
+
+| | Formula | Movement it assumes |
+|---|---|---|
+| **Manhattan** | \|x₁−x₂\| + \|y₁−y₂\| | four directions, no diagonals — what this game does |
+| **Euclidean** | √((x₁−x₂)² + (y₁−y₂)²) | straight line, diagonals allowed |
+| **Squared** | (x₁−x₂)² + (y₁−y₂)² | Euclidean without the square root |
 
 | Key | What it does |
 |---|---|
-| **R** | reset both searches to the enemy's current tile |
+| **R** | reset all three searches to the enemy's current tile |
 | **J** / **Shift + J** | one BFS expansion / expand continuously |
 | **K** / **Shift + K** | one Dijkstra expansion / expand continuously |
+| **B** / **Shift + B** | A\* with Manhattan |
+| **N** / **Shift + N** | A\* with Euclidean |
+| **M** / **Shift + M** | A\* with Squared |
+| **Left click** | move the enemy to that tile and restart the search there |
 
-BFS and Dijkstra share `visited`, `breadcrumbs` and `pathTiles`, so run **one
-search per reset**: press **R** before switching from J to K.
-
-## The map: a high-cost band
-
-`MapTemplate.tmx` now has a band of tiles with gid **50** on the `Navigation`
-layer (the second tile of the `MapMetadata` tileset). They are walkable, but
-`MovementCost()` returns `highCost = 5` for them. Without a band both searches
-give identical paths; with it, BFS cuts straight through and Dijkstra walks
-around when that is cheaper. The `Navigation` layer is `visible="0"`, and the
-band is also painted on the `Map` layer so you can see it.
-
-`highCostGid`, like `blockedGid`, is a fact about *this* TMX: check the
-`firstgid` of your own tileset.
+All three searches share `visited`, `breadcrumbs`, `costSoFar` and `pathTiles`,
+so run **one search per reset**: press **R** before switching between J, K, B,
+N and M.
 
 ## What each TODO does
 
 | Marker | File | Answer |
 |---|---|---|
-| `L12: TODO 1` | `Pathfinding.cpp` `PropagateBFS()` | `breadcrumbs[nx][ny] = frontierTile;` when a neighbour is first discovered |
-| `L12: TODO 2` | `Pathfinding.cpp` `ComputePath()` and `PropagateBFS()` | `ComputePath()`: walk `current = breadcrumbs[current]` pushing each tile to `pathTiles` until a tile is its own breadcrumb, then push the start; give up on a `(-1, -1)` breadcrumb. Then `ComputePath(frontierTile);` in `PropagateBFS()` once the destination is found |
-| `L12: TODO 3` | `Pathfinding.cpp` `PropagateDijkstra()` | BFS + cost + priority queue: see below |
+| `L13: TODO 1` | `Vector2D.h` / `Vector2D.cpp` | `distanceManhattan()`, `distanceEuclidean()` and `distanceSquared()` — `std::abs` + `std::abs`, `std::sqrt(std::pow(...))`, and the same without the root |
+| `L13: TODO 2` | `Pathfinding.cpp` `PropagateAStar()` | `PropagateDijkstra()` copied, reading and pushing `frontierAStar`, with `h` from a `switch` on the heuristic and `f = g + h` as the priority |
+| `L13: TODO 3` | `Enemy.cpp` `PerformPathfinding()` | Six blocks: B / N / M for one expansion, each with its `Shift` variant, calling `PropagateAStar()` with `MANHATTAN`, `EUCLIDEAN` and `SQUARED` |
+| `L13: TODO 4` | `Enemy.cpp` `PerformPathfinding()` | Left click → `WorldToMap()` on the unscaled mouse position → `SetPosition()` on that tile → `ResetPath()` |
 
-Given, not written by students: `MovementCost()`, the new
-members in `Pathfinding.h`, the new lines in the constructor / `ResetPath()` /
-`DrawPath()` / `CleanUp()`, the K keys in `Enemy`, and `Vector2D::operator<`
-and `operator>`.
+Given, not written by students: the `ASTAR_HEURISTICS` enum and `frontierAStar`
+in `Pathfinding.h`, and the lines that clear and seed `frontierAStar` in
+`ResetPath()` and draw it in `DrawPath()`.
 
-## Why the start tile is its own breadcrumb
-
-`ResetPath()` sets `breadcrumbs[start] = start`. `ComputePath()` walks
-`current = breadcrumbs[current]` and stops when a tile points at itself, so
-that is the only thing that ends the walk. Every other tile starts at
-`(-1, -1)`, meaning "never reached"; if the walk hits one, there is no path and
-`ComputePath()` logs it and returns an empty path rather than indexing the grid
-with `-1`.
-
-## Dijkstra in one block
+## A\* in one block
 
 ```cpp
-int newCost = costSoFar[frontierTile] + MovementCost(neighbor);
+// the movement cost from the start point to the current tile
+int g = costSoFar[frontierTile] + MovementCost(neighbor);
 
-if (!visited[neighbor] || newCost < costSoFar[neighbor]) {
+// the estimated movement cost from the current tile to the destination point
+int h = 0;
+switch (heuristic) { /* Manhattan, Euclidean or Squared to playerPosTile */ }
+
+// A* priority function
+int f = g + h;
+
+if (!visited[neighbor] || g < costSoFar[neighbor]) {
     visited[neighbor]     = true;
-    costSoFar[neighbor]   = newCost;
+    costSoFar[neighbor]   = g;
     breadcrumbs[neighbor] = frontierTile;
-    frontierDijkstra.push({ newCost, neighbor });
+    frontierAStar.push({ f, neighbor });
 }
 ```
 
-Three differences from BFS:
+Two things to point at:
 
-- **The queue is ordered by cost.** `std::priority_queue` is a max-heap by
-  default; `std::greater` flips it so `top()` is the cheapest tile.
-- **A tile can be re-visited.** BFS never improves on its first discovery,
-  because the first discovery is always the shortest. With costs that is no
-  longer true, so the `newCost < costSoFar` test lets a cheaper route overwrite
-  an expensive one.
-- **`MovementCost()` must never be negative.** Dijkstra's guarantee depends on
-  it.
+- **`costSoFar` stores `g`, the queue is ordered by `f`.** `costSoFar` is what
+  the next expansion builds on; `f` is only a sorting key. Storing `f` there
+  makes every later `g` wrong, and the search still runs and still draws a
+  path — it just stops being correct.
+- **The comparison test is on `g`, not `f`.** "Is this a cheaper way in?" is a
+  question about real cost. Two routes to the same tile share the same `h`, so
+  comparing `f` would give the same answer here, but it stops being true the
+  moment the destination moves mid-search.
 
-## Why `Vector2D` gained `operator<` and `operator>`
+## The heuristic has to speak the same language as the cost
 
-The frontier holds `std::pair<int, Vector2D>`, and `std::greater` on a pair
-compares `first` and, on a tie, `second`. So `Vector2D` needs an ordering. It is
-x then y, and it is arbitrary: it only decides which of two equal-cost tiles
-is expanded first, and the resulting paths are equally cheap. Because of that,
-BFS and Dijkstra may break ties differently on the same map.
+`g` is in movement cost: 1 per ordinary tile, `highCost = 5` on the gid-50 band.
+`h` must be in those same units or adding them is meaningless. Manhattan returns
+a number of tiles and the cheapest tile costs 1, so it never promises less than
+the truth.
+
+A heuristic that never overestimates is **admissible**, and A\* only guarantees
+the shortest path when the heuristic is admissible. Manhattan and Euclidean are.
+**Squared is not**, and not by a little: its error grows with the square of the
+distance, so ten tiles away it claims 100 against a real cost of about 10. `h`
+then swamps `g` entirely and A\* becomes "always run at the player" — very few
+tiles expanded, and a path that can be worse than the one Dijkstra returns.
+
+That is the demo: **R**, **Shift + K** (Dijkstra floods), **R**, **Shift + B**
+(A\* leans towards the player, same path), **R**, **Shift + M** (A\* barely
+looks around, and the route is not always the good one).
+
+## Moving the enemy with the mouse
+
+`Input::GetMousePosition()` already divides by the window scale, and
+`Render::DrawTexture()` draws at `x * scale + camera.x`, so the camera offset
+has to be unscaled before it can be subtracted:
+
+```cpp
+mouseX - Engine::GetInstance().render->camera.x / scale
+```
+
+The click is ignored unless `IsWalkable()` accepts the tile, so the enemy cannot
+be dropped into a wall or off the map — which would trip the guard in
+`ResetPath()` and leave the search with an empty frontier.
 
 ## Build
 
 Open `PlatformGame.sln`, select **x64**, build and run. Press **R**, then hold
-**Shift + K**: the search floods outward, slowing down around the gid-50 band,
-and stops at the player with an **X** drawn along the route. Press **R**, then
-**Shift + J** for the same with BFS and compare the two routes.
+**Shift + B**: the search fans out towards the player instead of in all
+directions and stops with an **X** along the route. Click somewhere else on the
+map to move the enemy and try again from there.
 
 ## Read the code
 
-`Pathfinding::PropagateDijkstra()` next to `PropagateBFS()` — the only changes
-are the queue, the cost and the re-visit test. Then `ComputePath()`.
+`PropagateAStar()` next to `PropagateDijkstra()` — the diff between the two
+functions is the point of the lecture. Then the three distance functions at the
+end of `Vector2D.cpp`.
 
 ## Homework
 
-- Compare this branch against `L12_Pathfinding_Dijkstra` — the diff should be
-  the TODO bodies and nothing else.
-- Change `highCost` to 1, then to 50. What happens to the Dijkstra path in each
-  case, and why does BFS not care?
-- Dijkstra expands in every direction. What extra information would let it
-  head towards the player instead? (That is A\*.)
-- Why is it wrong for `MovementCost()` to return 0 or less for a tile?
+- Compare this branch against `L13_Pathfinding_AStar` — the diff should be the
+  four TODO bodies and nothing else.
+- Count roughly how many tiles BFS, Dijkstra and A\*-Manhattan expand between
+  the same two points. Which is fastest, and which guarantees the cheapest path?
+- Multiply `h` by 10 and press **B** again. What happens to the shape of the
+  expansion, and to the path?
+- Set `h = 0` for every tile. Which algorithm have you just written?
+- The enemy still does not move. What would it need from `pathTiles` to walk the
+  route? (That is L14.)
 
 ## Reference
 
 - Red Blob Games, *Introduction to A\** —
   <https://www.redblobgames.com/pathfinding/a-star/introduction.html>
+- Red Blob Games, *Heuristics* —
+  <http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html>
 - A1 spec: "Pathfinding — enemies use a pathfinding algorithm to reach the
   player"
